@@ -1,5 +1,5 @@
 # ==============================================================================
-# SEGUNDA FEB - PLATA DE ANALÍTICA & SCOUTING (EDICIÓN NORMALIZADA)
+# SEGUNDA FEB - PLATA DE ANALÍTICA & SCOUTING (PERCENTILES POR ARQUETIPO)
 # ==============================================================================
 
 library(shiny)
@@ -166,7 +166,7 @@ custom_css <- tags$head(
     .bslib-value-box .value-box-title { color: #cbd5e1 !important; font-size: 1.1rem !important; font-weight: 600 !important; }
 
     .sidebar { background-color: #111827 !important; border-right: 1px solid #334155 !important; color: #cbd5e1 !important; font-size: 1.05rem !important; }
-    .sidebar-title { color: #10b981 !important; font-size: 1.25rem !important; font-weight: 700 !important; }
+    .sidebar-title { color: #10b981 !important; font-size: 1.25rem !important; }
     .form-control, .selectize-input, select, input, .form-select {
       background-color: #0f172a !important;
       color: #f8fafc !important;
@@ -304,7 +304,7 @@ ui <- page_navbar(
                     selected = 0),
         uiOutput("ui_scout_player"),
         hr(),
-        helpText("Percentiles posicionales y métricas de estabilidad (Mediana, MAD y CV).")
+        helpText("Percentiles comparados dentro de su propio arquetipo táctico.")
       ),
       layout_columns(
         col_widths = c(5, 7),
@@ -313,7 +313,7 @@ ui <- page_navbar(
           card_body(uiOutput("card_player_bio"))
         ),
         card(
-          card_header(span(icon("chart-pie"), " Radar de Percentiles (0 - 100)")),
+          card_header(span(icon("chart-pie"), " Radar de Percentiles por Arquetipo (0 - 100)")),
           card_body(plotlyOutput("plot_player_radar", height = "390px"))
         )
       ),
@@ -322,7 +322,7 @@ ui <- page_navbar(
         card_body(class = "scroll-panel", uiOutput("ui_player_nlg_report"))
       ),
       card(
-        card_header(span(icon("table-cells"), " Estadísticas & Percentiles en la Liga")),
+        card_header(span(icon("table-cells"), " Estadísticas & Percentiles por Arquetipo")),
         card_body(uiOutput("ui_player_stats_table"))
       )
     )
@@ -687,7 +687,7 @@ server <- function(input, output, session) {
   })
   
   # ----------------------------------------------------------------------------
-  # REACTIVOS - PLAYER SCOUTING & INTEGRAL DOSSIER
+  # REACTIVOS - PLAYER SCOUTING & INTEGRAL DOSSIER (PERCENTILES POR ARQUETIPO)
   # ----------------------------------------------------------------------------
   players_scout_list <- reactive({
     con <- get_db_con()
@@ -721,7 +721,7 @@ server <- function(input, output, session) {
       SELECT 
         j.id_jugador, j.nombre_completo, COALESCE(NULLIF(j.puesto_posicion, 'Sin Posición'), 'Posición Desconocida') AS puesto_posicion,
         j.altura_cm, e.nombre_oficial AS equipo,
-        pa.nombre_arquetipo, pa.descripcion_perfil
+        pa.cluster_id, pa.nombre_arquetipo, pa.descripcion_perfil
       FROM jugadores j
       LEFT JOIN equipos e ON j.id_equipo_actual = e.id_equipo
       LEFT JOIN player_archetypes pa ON j.id_jugador = pa.id_jugador
@@ -734,9 +734,12 @@ server <- function(input, output, session) {
       WHERE id_jugador = %s AND minutos_decimal > 0;
     ", pid)) %>% mutate(across(everything(), as.numeric))
     
+    # Base league stats join archetype
     df_all_league <- dbGetQuery(con, "
       SELECT 
         j.id_jugador,
+        COALESCE(pa.cluster_id, 0) AS cluster_id,
+        COALESCE(pa.nombre_arquetipo, 'En evaluación') AS arquetipo_grupo,
         COUNT(bs.id_partido) AS partidos,
         AVG(bs.minutos_decimal) AS min_pg,
         AVG(bs.puntos) AS ppg,
@@ -765,11 +768,14 @@ server <- function(input, output, session) {
       FROM jugadores j
       JOIN box_scores_raw bs ON j.id_jugador = bs.id_jugador
       JOIN player_advanced_stats pas ON bs.id_jugador = pas.id_jugador AND bs.id_partido = pas.id_partido
+      LEFT JOIN player_archetypes pa ON j.id_jugador = pa.id_jugador
       WHERE bs.minutos_decimal > 0
-      GROUP BY j.id_jugador;
-    ") %>% mutate(across(everything(), as.numeric))
+      GROUP BY j.id_jugador, pa.cluster_id, pa.nombre_arquetipo;
+    ") %>% mutate(across(c(id_jugador, cluster_id, partidos, min_pg, ppg, rpg, oreb_pg, dreb_pg, apg, spg, bpg, topg, fpg, val_pg, t2_pct, t3_pct, tl_pct, ppg40, rpg40, apg40, val40, ts_pct, efg_pct, usg_pct), as.numeric))
     
+    # Calculate percentiles GROUPED BY ARCHETYPE (cluster_id)
     df_perc <- df_all_league %>%
+      group_by(cluster_id) %>%
       mutate(
         pctil_ppg     = percent_rank(ppg) * 100,
         pctil_rpg     = percent_rank(rpg) * 100,
@@ -791,23 +797,20 @@ server <- function(input, output, session) {
         pctil_ts      = percent_rank(coalesce(ts_pct, 0)) * 100,
         pctil_efg     = percent_rank(coalesce(efg_pct, 0)) * 100,
         pctil_usg     = percent_rank(coalesce(usg_pct, 0)) * 100
-      )
+      ) %>%
+      ungroup()
     
     p_stat <- df_perc %>% filter(id_jugador == as.numeric(pid))
     
-    pos_nom <- df_bio$puesto_posicion[1]
-    df_pos_all <- dbGetQuery(con, sprintf("
-      SELECT pas.ts_pct, pas.usg_pct, pas.valoracion_per40
-      FROM player_advanced_stats pas
-      JOIN jugadores j ON pas.id_jugador = j.id_jugador
-      WHERE COALESCE(NULLIF(j.puesto_posicion, 'Sin Posición'), 'Posición Desconocida') = '%s' AND pas.cumple_umbral = 1;
-    ", pos_nom)) %>% mutate(across(everything(), as.numeric))
+    # Benchmark por arquetipo
+    cid <- df_bio$cluster_id[1]
+    df_arq_all <- df_all_league %>% filter(cluster_id == cid)
     
-    med_ts <- if (nrow(df_pos_all) > 0) median(df_pos_all$ts_pct, na.rm = TRUE) else 50.0
-    med_usg <- if (nrow(df_pos_all) > 0) median(df_pos_all$usg_pct, na.rm = TRUE) else 20.0
-    med_val40 <- if (nrow(df_pos_all) > 0) median(df_pos_all$valoracion_per40, na.rm = TRUE) else 15.0
+    med_ts <- if (nrow(df_arq_all) > 0) median(df_arq_all$ts_pct, na.rm = TRUE) else 50.0
+    med_usg <- if (nrow(df_arq_all) > 0) median(df_arq_all$usg_pct, na.rm = TRUE) else 20.0
+    med_val40 <- if (nrow(df_arq_all) > 0) median(df_arq_all$val40, na.rm = TRUE) else 15.0
     
-    df_pos_bench <- tibble(med_ts = med_ts, med_usg = med_usg, med_val40 = med_val40)
+    df_arq_bench <- tibble(med_ts = med_ts, med_usg = med_usg, med_val40 = med_val40)
     
     val_vec <- df_games$valoracion
     val_mean <- mean(val_vec, na.rm = TRUE)
@@ -827,7 +830,7 @@ server <- function(input, output, session) {
       bio = df_bio,
       stats = p_stat,
       games = df_games,
-      bench = df_pos_bench,
+      bench = df_arq_bench,
       mad = val_mad,
       cv = val_cv,
       stability = stability_label
@@ -903,8 +906,11 @@ server <- function(input, output, session) {
   
   output$ui_player_stats_table <- renderUI({
     d <- player_data()
+    b <- d$bio
     s <- d$stats
     if (nrow(s) == 0) return(div(class = "alert alert-warning", "Sin datos para este jugador."))
+    
+    arq_nombre <- if (!is.na(b$nombre_arquetipo)) b$nombre_arquetipo else "su Arquetipo"
     
     fmt_val <- function(val, suffix = "") {
       if (is.na(val)) return("—")
@@ -950,10 +956,10 @@ server <- function(input, output, session) {
           tags$table(class = "table table-dark table-striped table-hover align-middle mb-0", style = "font-size: 1.05rem;",
                      tags$thead(
                        tags$tr(style = "background-color: #0b0f19;",
-                         tags$th("Métrica / Categoría Estadística", style = "width: 34%; color: #10b981; font-weight: 700; padding: 14px 18px;"),
+                         tags$th("Métrica / Categoría Estadística", style = "width: 32%; color: #10b981; font-weight: 700; padding: 14px 18px;"),
                          tags$th("Promedio Per-Game", style = "width: 18%; color: #cbd5e1; padding: 14px 18px;"),
                          tags$th("Proyección Per-40 min", style = "width: 20%; color: #cbd5e1; padding: 14px 18px;"),
-                         tags$th("Percentil Liga (0 - 100%)", style = "width: 28%; color: #cbd5e1; padding: 14px 18px;")
+                         tags$th(sprintf("Percentil en Arquetipo (%s)", arq_nombre), style = "width: 30%; color: #cbd5e1; padding: 14px 18px;")
                        )
                      ),
                      tags$tbody(
@@ -979,10 +985,10 @@ server <- function(input, output, session) {
     
     if (nrow(s) == 0) return(NULL)
     
-    p1 <- sprintf("<strong>Uso de Posesiones:</strong> Clasificado como <strong>%s</strong>, registra un <strong>%0.1f%% de USG%%</strong> (%+0.1f%% respecto a la mediana de su posición: %0.1f%%).",
+    p1 <- sprintf("<strong>Uso de Posesiones:</strong> Clasificado como <strong>%s</strong>, registra un <strong>%0.1f%% de USG%%</strong> (%+0.1f%% respecto a la mediana de su arquetipo: %0.1f%%).",
                   b$nombre_arquetipo, s$usg_pct[1], s$usg_pct[1] - bc$med_usg[1], bc$med_usg[1])
     
-    p2 <- sprintf("<strong>Efectividad de Tiro:</strong> Registra un <strong>%0.1f%% en True Shooting (TS%%)</strong> (%+0.1f%% sobre la mediana posicional), situándose en el <strong>percentil %0.1f</strong> de la liga en valoración por partido.",
+    p2 <- sprintf("<strong>Efectividad de Tiro:</strong> Registra un <strong>%0.1f%% en True Shooting (TS%%)</strong> (%+0.1f%% sobre la mediana de su arquetipo), situándose en el <strong>percentil %0.1f</strong> del grupo en valoración por partido.",
                   s$ts_pct[1], s$ts_pct[1] - bc$med_ts[1], s$pctil_val[1])
     
     p3 <- sprintf("<strong>Estabilidad de Rendimiento:</strong> Presenta un Coeficiente de Variación (CV) de <strong>%0.2f</strong> y una MAD de <strong>%0.1f val</strong> (%s).",
