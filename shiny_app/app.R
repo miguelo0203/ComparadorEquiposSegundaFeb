@@ -1,5 +1,5 @@
 # ==============================================================================
-# SEGUNDA FEB - PLATA DE ANALÍTICA & SCOUTING (PERCENTILES POR ARQUETIPO)
+# SEGUNDA FEB - PLATA DE ANALÍTICA & SCOUTING (ACCURATE SHOOTING TOTALS & PERCENTILES)
 # ==============================================================================
 
 library(shiny)
@@ -687,7 +687,7 @@ server <- function(input, output, session) {
   })
   
   # ----------------------------------------------------------------------------
-  # REACTIVOS - PLAYER SCOUTING & INTEGRAL DOSSIER (PERCENTILES POR ARQUETIPO)
+  # REACTIVOS - PLAYER SCOUTING & INTEGRAL DOSSIER (ACCURATE SHOOTING TOTALS)
   # ----------------------------------------------------------------------------
   players_scout_list <- reactive({
     con <- get_db_con()
@@ -734,7 +734,7 @@ server <- function(input, output, session) {
       WHERE id_jugador = %s AND minutos_decimal > 0;
     ", pid)) %>% mutate(across(everything(), as.numeric))
     
-    # Base league stats join archetype
+    # Base league stats join archetype with shooting totals
     df_all_league <- dbGetQuery(con, "
       SELECT 
         j.id_jugador,
@@ -752,6 +752,10 @@ server <- function(input, output, session) {
         AVG(bs.perdidas) AS topg,
         AVG(bs.faltas_cometidas) AS fpg,
         AVG(bs.valoracion) AS val_pg,
+        
+        SUM(bs.t2_anotados) AS t2a, SUM(bs.t2_intentados) AS t2i,
+        SUM(bs.t3_anotados) AS t3a, SUM(bs.t3_intentados) AS t3i,
+        SUM(bs.tl_anotados) AS tla, SUM(bs.tl_intentados) AS tli,
         
         SUM(bs.t2_anotados) * 1.0 / NULLIF(SUM(bs.t2_intentados), 0) * 100 AS t2_pct,
         SUM(bs.t3_anotados) * 1.0 / NULLIF(SUM(bs.t3_intentados), 0) * 100 AS t3_pct,
@@ -771,7 +775,7 @@ server <- function(input, output, session) {
       LEFT JOIN player_archetypes pa ON j.id_jugador = pa.id_jugador
       WHERE bs.minutos_decimal > 0
       GROUP BY j.id_jugador, pa.cluster_id, pa.nombre_arquetipo;
-    ") %>% mutate(across(c(id_jugador, cluster_id, partidos, min_pg, ppg, rpg, oreb_pg, dreb_pg, apg, spg, bpg, topg, fpg, val_pg, t2_pct, t3_pct, tl_pct, ppg40, rpg40, apg40, val40, ts_pct, efg_pct, usg_pct), as.numeric))
+    ") %>% mutate(across(c(id_jugador, cluster_id, partidos, min_pg, ppg, rpg, oreb_pg, dreb_pg, apg, spg, bpg, topg, fpg, val_pg, t2a, t2i, t3a, t3i, tla, tli, t2_pct, t3_pct, tl_pct, ppg40, rpg40, apg40, val40, ts_pct, efg_pct, usg_pct), as.numeric))
     
     # Calculate percentiles GROUPED BY ARCHETYPE (cluster_id)
     df_perc <- df_all_league %>%
@@ -802,7 +806,6 @@ server <- function(input, output, session) {
     
     p_stat <- df_perc %>% filter(id_jugador == as.numeric(pid))
     
-    # Benchmark por arquetipo
     cid <- df_bio$cluster_id[1]
     df_arq_all <- df_all_league %>% filter(cluster_id == cid)
     
@@ -857,7 +860,7 @@ server <- function(input, output, session) {
           span(arq_badge, class = "badge bg-success shadow-sm rounded-pill px-3 py-2 fw-bold"),
           span(sprintf("%s (CV = %0.2f)", d$stability, d$cv), class = sprintf("badge %s shadow-sm rounded-pill px-3 py-2 fw-bold", stab_bg))
       ),
-      p(em(arq_desc), style = "font-size: 1.05rem; color: #cbd5e1; margin-top: 6px;"),
+      p(strong("Perfil Táctico del Arquetipo: "), em(arq_desc), style = "font-size: 1.05rem; color: #cbd5e1; margin-top: 6px;"),
       hr(style = "border-color: #334155;"),
       layout_columns(
         fill = FALSE,
@@ -917,6 +920,11 @@ server <- function(input, output, session) {
       sprintf("%0.1f%s", val, suffix)
     }
     
+    fmt_ratio <- function(anot, tot, pct) {
+      if (is.na(tot) || tot == 0) return("0/0 (0.0%)")
+      sprintf("%d/%d (%0.1f%%)", as.integer(anot), as.integer(tot), pct)
+    }
+    
     fmt_pctil <- function(pctil) {
       if (is.na(pctil)) return(span("—", class = "badge bg-secondary"))
       v <- round(pctil, 1)
@@ -935,20 +943,20 @@ server <- function(input, output, session) {
     rows <- list(
       list(icon = icon("award"), cat = "Valoración Total (VAL)", per_g = fmt_val(s$val_pg[1], " val/G"), per_40 = fmt_val(s$val40[1], " val/40"), pctil = fmt_pctil(s$pctil_val[1])),
       list(icon = icon("basketball"), cat = "Puntos (PPG / Anotación)", per_g = fmt_val(s$ppg[1], " pts/G"), per_40 = fmt_val(s$ppg40[1], " pts/40"), pctil = fmt_pctil(s$pctil_ppg[1])),
-      list(icon = icon("bullseye"), cat = "True Shooting % (TS%)", per_g = fmt_val(s$ts_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_ts[1])),
-      list(icon = icon("crosshair"), cat = "Effective Field Goal % (eFG%)", per_g = fmt_val(s$efg_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_efg[1])),
-      list(icon = icon("fire"), cat = "Usage Rate % (USG%)", per_g = fmt_val(s$usg_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_usg[1])),
-      list(icon = icon("circle-dot"), cat = "Acierto Tiro de 2 % (T2%)", per_g = fmt_val(s$t2_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_t2[1])),
-      list(icon = icon("bullseye"), cat = "Acierto Tiro de 3 % (T3%)", per_g = fmt_val(s$t3_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_t3[1])),
-      list(icon = icon("pen"), cat = "Acierto Tiro Libre % (TL%)", per_g = fmt_val(s$tl_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_tl[1])),
+      list(icon = icon("bullseye"), cat = "True Shooting % (TS%)", per_g = fmt_val(s$ts_pct[1], "%"), per_40 = fmt_val(s$ts_pct[1], "%"), pctil = fmt_pctil(s$pctil_ts[1])),
+      list(icon = icon("crosshair"), cat = "Effective Field Goal % (eFG%)", per_g = fmt_val(s$efg_pct[1], "%"), per_40 = fmt_val(s$efg_pct[1], "%"), pctil = fmt_pctil(s$pctil_efg[1])),
+      list(icon = icon("fire"), cat = "Usage Rate % (USG%)", per_g = fmt_val(s$usg_pct[1], "%"), per_40 = fmt_val(s$usg_pct[1], "%"), pctil = fmt_pctil(s$pctil_usg[1])),
+      list(icon = icon("circle-dot"), cat = "Acierto Tiro de 2 % (T2%)", per_g = fmt_ratio(s$t2a[1], s$t2i[1], s$t2_pct[1]), per_40 = fmt_val(s$t2_pct[1], "%"), pctil = fmt_pctil(s$pctil_t2[1])),
+      list(icon = icon("bullseye"), cat = "Acierto Tiro de 3 % (T3%)", per_g = fmt_ratio(s$t3a[1], s$t3i[1], s$t3_pct[1]), per_40 = fmt_val(s$t3_pct[1], "%"), pctil = fmt_pctil(s$pctil_t3[1])),
+      list(icon = icon("pen"), cat = "Acierto Tiro Libre % (TL%)", per_g = fmt_ratio(s$tla[1], s$tli[1], s$tl_pct[1]), per_40 = fmt_val(s$tl_pct[1], "%"), pctil = fmt_pctil(s$pctil_tl[1])),
       list(icon = icon("arrows-up-down"), cat = "Rebotes Totales (RPG)", per_g = fmt_val(s$rpg[1], " reb/G"), per_40 = fmt_val(s$rpg40[1], " reb/40"), pctil = fmt_pctil(s$pctil_rpg[1])),
-      list(icon = icon("arrow-up-long"), cat = "Rebotes Ofensivos (OREB)", per_g = fmt_val(s$oreb_pg[1], " oreb/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_oreb[1])),
-      list(icon = icon("shield-halved"), cat = "Rebotes Defensivos (DREB)", per_g = fmt_val(s$dreb_pg[1], " dreb/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_dreb[1])),
+      list(icon = icon("arrow-up-long"), cat = "Rebotes Ofensivos (OREB)", per_g = fmt_val(s$oreb_pg[1], " oreb/G"), per_40 = fmt_val(s$oreb_pg[1], " oreb/G"), pctil = fmt_pctil(s$pctil_oreb[1])),
+      list(icon = icon("shield-halved"), cat = "Rebotes Defensivos (DREB)", per_g = fmt_val(s$dreb_pg[1], " dreb/G"), per_40 = fmt_val(s$dreb_pg[1], " dreb/G"), pctil = fmt_pctil(s$pctil_dreb[1])),
       list(icon = icon("share-nodes"), cat = "Asistencias (APG / Pase)", per_g = fmt_val(s$apg[1], " ast/G"), per_40 = fmt_val(s$apg40[1], " ast/40"), pctil = fmt_pctil(s$pctil_apg[1])),
-      list(icon = icon("hand-sparkles"), cat = "Robos / Recuperaciones (SPG)", per_g = fmt_val(s$spg[1], " rob/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_spg[1])),
-      list(icon = icon("hand"), cat = "Tapones (BPG / Def. Aro)", per_g = fmt_val(s$bpg[1], " tap/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_bpg[1])),
-      list(icon = icon("triangle-exclamation"), cat = "Pérdidas de Balón (TOPG)", per_g = fmt_val(s$topg[1], " perd/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_topg[1])),
-      list(icon = icon("ban"), cat = "Faltas Cometidas (FPG)", per_g = fmt_val(s$fpg[1], " faltas/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_fpg[1]))
+      list(icon = icon("hand-sparkles"), cat = "Robos / Recuperaciones (SPG)", per_g = fmt_val(s$spg[1], " rob/G"), per_40 = fmt_val(s$spg[1], " rob/G"), pctil = fmt_pctil(s$pctil_spg[1])),
+      list(icon = icon("hand"), cat = "Tapones (BPG / Def. Aro)", per_g = fmt_val(s$bpg[1], " tap/G"), per_40 = fmt_val(s$bpg[1], " tap/G"), pctil = fmt_pctil(s$pctil_bpg[1])),
+      list(icon = icon("triangle-exclamation"), cat = "Pérdidas de Balón (TOPG)", per_g = fmt_val(s$topg[1], " perd/G"), per_40 = fmt_val(s$topg[1], " perd/G"), pctil = fmt_pctil(s$pctil_topg[1])),
+      list(icon = icon("ban"), cat = "Faltas Cometidas (FPG)", per_g = fmt_val(s$fpg[1], " faltas/G"), per_40 = fmt_val(s$fpg[1], " faltas/G"), pctil = fmt_pctil(s$pctil_fpg[1]))
     )
     
     tagList(
@@ -957,9 +965,9 @@ server <- function(input, output, session) {
                      tags$thead(
                        tags$tr(style = "background-color: #0b0f19;",
                          tags$th("Métrica / Categoría Estadística", style = "width: 32%; color: #10b981; font-weight: 700; padding: 14px 18px;"),
-                         tags$th("Promedio Per-Game", style = "width: 18%; color: #cbd5e1; padding: 14px 18px;"),
-                         tags$th("Proyección Per-40 min", style = "width: 20%; color: #cbd5e1; padding: 14px 18px;"),
-                         tags$th(sprintf("Percentil en Arquetipo (%s)", arq_nombre), style = "width: 30%; color: #cbd5e1; padding: 14px 18px;")
+                         tags$th("Totales / Promedio Per-Game", style = "width: 22%; color: #cbd5e1; padding: 14px 18px;"),
+                         tags$th("Efectividad / Per-40 min", style = "width: 18%; color: #cbd5e1; padding: 14px 18px;"),
+                         tags$th(sprintf("Percentil en Arquetipo (%s)", arq_nombre), style = "width: 28%; color: #cbd5e1; padding: 14px 18px;")
                        )
                      ),
                      tags$tbody(
