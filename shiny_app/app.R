@@ -1,10 +1,11 @@
 # ==============================================================================
-# SEGUNDA FEB PRO - ELITE DARK ANALYTICS PLATFORM (ENHANCED TYPOGRAPHY EDITION)
+# SEGUNDA FEB PRO - ELITE DARK ANALYTICS PLATFORM (SQLITE CLOUD DUAL ENGINE)
 # ==============================================================================
 
 library(shiny)
 library(bslib)
 library(DBI)
+library(RSQLite)
 library(RPostgres)
 library(dplyr)
 library(tidyr)
@@ -14,25 +15,30 @@ library(plotly)
 library(DT)
 library(pROC)
 
-# Configuración de Conexión Segura a PostgreSQL
+# Configuración de Conexión Dual Segura (SQLite en Cloud / PostgreSQL en Local)
 get_db_con <- function() {
-  con <- dbConnect(
-    RPostgres::Postgres(),
-    dbname   = "postgres",
-    host     = "127.0.0.1",
-    port     = 5433,
-    user     = "postgres",
-    password = ""
-  )
-  dbExecute(con, "SET search_path TO segunda_feb_pro, public;")
-  return(con)
+  if (file.exists("segunda_feb_pro.sqlite")) {
+    con <- dbConnect(RSQLite::SQLite(), "segunda_feb_pro.sqlite")
+    return(con)
+  } else {
+    con <- dbConnect(
+      RPostgres::Postgres(),
+      dbname   = "postgres",
+      host     = "127.0.0.1",
+      port     = 5433,
+      user     = "postgres",
+      password = ""
+    )
+    dbExecute(con, "SET search_path TO segunda_feb_pro, public;")
+    return(con)
+  }
 }
 
 # Carga de catálogos estáticos iniciales
 init_con <- get_db_con()
-equipos_list <- dbGetQuery(init_con, "SELECT id_equipo, nombre_oficial FROM segunda_feb_pro.equipos ORDER BY nombre_oficial;") %>%
+equipos_list <- dbGetQuery(init_con, "SELECT id_equipo, nombre_oficial FROM equipos ORDER BY nombre_oficial;") %>%
   mutate(id_equipo = as.numeric(id_equipo))
-arquetipos_list <- dbGetQuery(init_con, "SELECT DISTINCT cluster_id, nombre_arquetipo FROM segunda_feb_pro.player_archetypes ORDER BY cluster_id;") %>%
+arquetipos_list <- dbGetQuery(init_con, "SELECT DISTINCT cluster_id, nombre_arquetipo FROM player_archetypes ORDER BY cluster_id;") %>%
   mutate(cluster_id = as.numeric(cluster_id))
 posiciones_list <- c("Todas", "Base", "Escolta", "Alero", "Ala-Pívot", "Pívot", "Posición Desconocida")
 
@@ -45,9 +51,9 @@ df_train_raw <- dbGetQuery(init_con, "
     tas_l.efg_pct AS efg_l, tas_l.tov_pct AS tov_l, tas_l.oreb_pct AS oreb_l, tas_l.ft_rate AS ftr_l,
     tas_v.pace AS pace_v, tas_v.ortg AS ortg_v, tas_v.drtg AS drtg_v, tas_v.net_rating AS net_v,
     tas_v.efg_pct AS efg_v, tas_v.tov_pct AS tov_v, tas_v.oreb_pct AS oreb_v, tas_v.ft_rate AS ftr_v
-  FROM segunda_feb_pro.partidos p
-  JOIN segunda_feb_pro.team_advanced_stats tas_l ON p.id_partido = tas_l.id_partido AND p.id_equipo_local = tas_l.id_equipo
-  JOIN segunda_feb_pro.team_advanced_stats tas_v ON p.id_partido = tas_v.id_partido AND p.id_equipo_visitante = tas_v.id_equipo;
+  FROM partidos p
+  JOIN team_advanced_stats tas_l ON p.id_partido = tas_l.id_partido AND p.id_equipo_local = tas_l.id_equipo
+  JOIN team_advanced_stats tas_v ON p.id_partido = tas_v.id_partido AND p.id_equipo_visitante = tas_v.id_equipo;
 ") %>% mutate(across(where(~ inherits(.x, "integer64") || is.integer(.x)), as.numeric)) %>%
   mutate(
     victoria_real = if_else(pts_l > pts_v, 1, 0),
@@ -445,14 +451,14 @@ server <- function(input, output, session) {
       SELECT 
         AVG(pace) AS pace, AVG(ortg) AS ortg, AVG(drtg) AS drtg, AVG(net_rating) AS net_rating,
         AVG(efg_pct) AS efg_pct, AVG(tov_pct) AS tov_pct, AVG(oreb_pct) AS oreb_pct, AVG(ft_rate) AS ft_rate
-      FROM segunda_feb_pro.team_advanced_stats WHERE id_equipo = %s;
+      FROM team_advanced_stats WHERE id_equipo = %s;
     ", input$team_local))
     
     df_vis <- dbGetQuery(con, sprintf("
       SELECT 
         AVG(pace) AS pace, AVG(ortg) AS ortg, AVG(drtg) AS drtg, AVG(net_rating) AS net_rating,
         AVG(efg_pct) AS efg_pct, AVG(tov_pct) AS tov_pct, AVG(oreb_pct) AS oreb_pct, AVG(ft_rate) AS ft_rate
-      FROM segunda_feb_pro.team_advanced_stats WHERE id_equipo = %s;
+      FROM team_advanced_stats WHERE id_equipo = %s;
     ", input$team_visitor))
     
     list(loc = df_loc, vis = df_vis)
@@ -581,8 +587,8 @@ server <- function(input, output, session) {
         AVG(tas.ortg) AS ortg,
         AVG(tas.drtg) AS drtg,
         AVG(tas.net_rating) AS net_rating
-      FROM segunda_feb_pro.team_advanced_stats tas
-      JOIN segunda_feb_pro.equipos e ON tas.id_equipo = e.id_equipo
+      FROM team_advanced_stats tas
+      JOIN equipos e ON tas.id_equipo = e.id_equipo
       GROUP BY e.id_equipo, e.nombre_oficial;
     ") %>% mutate(across(c(id_equipo, ortg, drtg, net_rating), as.numeric))
     
@@ -666,7 +672,7 @@ server <- function(input, output, session) {
     con <- get_db_con()
     on.exit(dbDisconnect(con))
     
-    sql <- "SELECT j.id_jugador, j.nombre_completo FROM segunda_feb_pro.jugadores j"
+    sql <- "SELECT j.id_jugador, j.nombre_completo FROM jugadores j"
     if (as.numeric(input$scout_team) > 0) {
       sql <- sprintf("%s WHERE j.id_equipo_actual = %s", sql, input$scout_team)
     }
@@ -695,15 +701,15 @@ server <- function(input, output, session) {
         j.id_jugador, j.nombre_completo, COALESCE(NULLIF(j.puesto_posicion, 'Sin Posición'), 'Posición Desconocida') AS puesto_posicion,
         j.altura_cm, e.nombre_oficial AS equipo,
         pa.nombre_arquetipo, pa.descripcion_perfil
-      FROM segunda_feb_pro.jugadores j
-      LEFT JOIN segunda_feb_pro.equipos e ON j.id_equipo_actual = e.id_equipo
-      LEFT JOIN segunda_feb_pro.player_archetypes pa ON j.id_jugador = pa.id_jugador
+      FROM jugadores j
+      LEFT JOIN equipos e ON j.id_equipo_actual = e.id_equipo
+      LEFT JOIN player_archetypes pa ON j.id_jugador = pa.id_jugador
       WHERE j.id_jugador = %s;
     ", pid))
     
     df_games <- dbGetQuery(con, sprintf("
       SELECT valoracion, puntos, ts_pct, usg_pct, puntos_per40, rebotes_per40, asistencias_per40, valoracion_per40
-      FROM segunda_feb_pro.player_advanced_stats
+      FROM player_advanced_stats
       WHERE id_jugador = %s AND minutos_decimal > 0;
     ", pid)) %>% mutate(across(everything(), as.numeric))
     
@@ -724,20 +730,23 @@ server <- function(input, output, session) {
         AVG(pctil_puntos) AS pctil_pts,
         AVG(pctil_rebotes) AS pctil_reb,
         AVG(pctil_asistencias) AS pctil_ast
-      FROM segunda_feb_pro.player_advanced_stats
+      FROM player_advanced_stats
       WHERE id_jugador = %s;
     ", pid)) %>% mutate(across(everything(), as.numeric))
     
     pos_nom <- df_bio$puesto_posicion[1]
-    df_pos_bench <- dbGetQuery(con, sprintf("
-      SELECT 
-        PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY pas.ts_pct) AS med_ts,
-        PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY pas.usg_pct) AS med_usg,
-        PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY pas.valoracion_per40) AS med_val40
-      FROM segunda_feb_pro.player_advanced_stats pas
-      JOIN segunda_feb_pro.jugadores j ON pas.id_jugador = j.id_jugador
-      WHERE COALESCE(NULLIF(j.puesto_posicion, 'Sin Posición'), 'Posición Desconocida') = '%s' AND pas.cumple_umbral = TRUE;
+    df_pos_all <- dbGetQuery(con, sprintf("
+      SELECT pas.ts_pct, pas.usg_pct, pas.valoracion_per40
+      FROM player_advanced_stats pas
+      JOIN jugadores j ON pas.id_jugador = j.id_jugador
+      WHERE COALESCE(NULLIF(j.puesto_posicion, 'Sin Posición'), 'Posición Desconocida') = '%s' AND pas.cumple_umbral = 1;
     ", pos_nom)) %>% mutate(across(everything(), as.numeric))
+    
+    med_ts <- if (nrow(df_pos_all) > 0) median(df_pos_all$ts_pct, na.rm = TRUE) else 50.0
+    med_usg <- if (nrow(df_pos_all) > 0) median(df_pos_all$usg_pct, na.rm = TRUE) else 20.0
+    med_val40 <- if (nrow(df_pos_all) > 0) median(df_pos_all$valoracion_per40, na.rm = TRUE) else 15.0
+    
+    df_pos_bench <- tibble(med_ts = med_ts, med_usg = med_usg, med_val40 = med_val40)
     
     val_vec <- df_games$valoracion
     val_mean <- mean(val_vec, na.rm = TRUE)
@@ -899,16 +908,16 @@ server <- function(input, output, session) {
         COALESCE(NULLIF(j.puesto_posicion, 'Sin Posición'), 'Posición Desconocida') AS posicion,
         pa.nombre_arquetipo AS arquetipo,
         e.nombre_oficial AS equipo,
-        ROUND(AVG(pas.puntos_per40)::numeric, 1) AS ppg_40,
-        ROUND(AVG(pas.valoracion_per40)::numeric, 1) AS val_40,
-        ROUND(AVG(pas.ts_pct)::numeric, 1) AS ts_pct,
-        ROUND(AVG(pas.usg_pct)::numeric, 1) AS usg_pct,
-        ROUND(AVG(pas.pctil_valoracion)::numeric, 1) AS pctil_val
-      FROM segunda_feb_pro.jugadores j
-      JOIN segunda_feb_pro.player_advanced_stats pas ON j.id_jugador = pas.id_jugador
-      JOIN segunda_feb_pro.player_archetypes pa ON j.id_jugador = pa.id_jugador
-      LEFT JOIN segunda_feb_pro.equipos e ON j.id_equipo_actual = e.id_equipo
-      WHERE pas.cumple_umbral = TRUE
+        ROUND(AVG(pas.puntos_per40), 1) AS ppg_40,
+        ROUND(AVG(pas.valoracion_per40), 1) AS val_40,
+        ROUND(AVG(pas.ts_pct), 1) AS ts_pct,
+        ROUND(AVG(pas.usg_pct), 1) AS usg_pct,
+        ROUND(AVG(pas.pctil_valoracion), 1) AS pctil_val
+      FROM jugadores j
+      JOIN player_advanced_stats pas ON j.id_jugador = pas.id_jugador
+      JOIN player_archetypes pa ON j.id_jugador = pa.id_jugador
+      LEFT JOIN equipos e ON j.id_equipo_actual = e.id_equipo
+      WHERE pas.cumple_umbral = 1
         AND pa.cluster_id IN (%s)
       GROUP BY j.id_jugador, j.nombre_completo, j.puesto_posicion, pa.nombre_arquetipo, e.nombre_oficial
       HAVING AVG(pas.puntos_per40) >= %f
@@ -954,12 +963,12 @@ server <- function(input, output, session) {
     
     df_loc <- dbGetQuery(con, sprintf("
       SELECT AVG(pace) AS pace, AVG(net_rating) AS net_l, AVG(efg_pct) AS efg_l, AVG(tov_pct) AS tov_l, AVG(oreb_pct) AS oreb_l, AVG(ft_rate) AS ftr_l
-      FROM segunda_feb_pro.team_advanced_stats WHERE id_equipo = %s;
+      FROM team_advanced_stats WHERE id_equipo = %s;
     ", input$sim_local))
     
     df_vis <- dbGetQuery(con, sprintf("
       SELECT AVG(pace) AS pace, AVG(net_rating) AS net_v, AVG(efg_pct) AS efg_v, AVG(tov_pct) AS tov_v, AVG(oreb_pct) AS oreb_v, AVG(ft_rate) AS ftr_v
-      FROM segunda_feb_pro.team_advanced_stats WHERE id_equipo = %s;
+      FROM team_advanced_stats WHERE id_equipo = %s;
     ", input$sim_visitor))
     
     df_sim_feat <- tibble(
@@ -1065,15 +1074,15 @@ server <- function(input, output, session) {
         AVG(tas.oreb_pct) AS oreb,
         AVG(tas.ft_rate) AS ftr,
         AVG(tas.net_rating) AS net_rating
-      FROM segunda_feb_pro.team_advanced_stats tas
-      JOIN segunda_feb_pro.equipos e ON tas.id_equipo = e.id_equipo
+      FROM team_advanced_stats tas
+      JOIN equipos e ON tas.id_equipo = e.id_equipo
       GROUP BY e.id_equipo, e.nombre_oficial;
     ") %>% mutate(across(where(~ is.numeric(.) || inherits(., "integer64")), as.numeric))
     
     # 2. HHI per team
     df_pts <- dbGetQuery(con, "
       SELECT id_equipo, id_jugador, SUM(puntos) AS total_pts
-      FROM segunda_feb_pro.box_scores_raw
+      FROM box_scores_raw
       GROUP BY id_equipo, id_jugador;
     ") %>% mutate(across(everything(), as.numeric))
     
@@ -1088,7 +1097,7 @@ server <- function(input, output, session) {
     # 3. Starter fatigue (Top 5 minutes ratio)
     df_min <- dbGetQuery(con, "
       SELECT id_equipo, id_jugador, SUM(minutos_decimal) AS total_min
-      FROM segunda_feb_pro.box_scores_raw
+      FROM box_scores_raw
       GROUP BY id_equipo, id_jugador;
     ") %>% mutate(across(everything(), as.numeric))
     
@@ -1108,8 +1117,8 @@ server <- function(input, output, session) {
         bs.id_equipo,
         COALESCE(pa.nombre_arquetipo, 'En Evaluación') AS arquetipo,
         SUM(bs.minutos_decimal) AS minutos_totales
-      FROM segunda_feb_pro.box_scores_raw bs
-      LEFT JOIN segunda_feb_pro.player_archetypes pa ON bs.id_jugador = pa.id_jugador
+      FROM box_scores_raw bs
+      LEFT JOIN player_archetypes pa ON bs.id_jugador = pa.id_jugador
       GROUP BY bs.id_equipo, pa.nombre_arquetipo;
     ") %>% mutate(across(c(id_equipo, minutos_totales), as.numeric))
     
