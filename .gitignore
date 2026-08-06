@@ -1,0 +1,28 @@
+# ==============================================================================
+# SEGUNDA FEB PRO - GITIGNORE CONFIGURATION
+# ==============================================================================
+
+# PostgreSQL Cluster Binary Data (Crucial: Nunca subir datos binarios del SGBD)
+pg_data/
+pg_data/*
+
+# Archivos de Pruebas Temporales & Scratch Scripts
+scratch/
+scratch/*
+
+# Archivos de Sesión & Caché de R
+.Rhistory
+.RData
+.RDataTmp
+.Rproj.user/
+
+# Logs del Sistema & Archivos Temporales de SO
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Exportaciones temporales o backups locales masivos
+*.bak
+*.dmp
+*.sql.gz
