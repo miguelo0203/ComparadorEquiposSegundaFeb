@@ -1,5 +1,5 @@
 # ==============================================================================
-# SEGUNDA FEB PRO - ELITE DARK ANALYTICS PLATFORM (BOOTSTRAP 5 ENHANCED STATS)
+# SEGUNDA FEB PRO - ELITE DARK ANALYTICS PLATFORM (FULLSCREEN MATRIX & BOOTSTRAP UI)
 # ==============================================================================
 
 library(shiny)
@@ -87,7 +87,7 @@ theme_custom <- bs_theme(
   base_font = font_google("Inter")
 )
 
-# Estilos CSS Personalizados con Tipografía Ampliada y Componentes Bootstrap Elevados
+# Estilos CSS Personalizados con Tipografía Ampliada y Pantalla Completa
 custom_css <- tags$head(
   tags$style(HTML("
     body {
@@ -185,6 +185,19 @@ custom_css <- tags$head(
     .dataTables_info, .dataTables_paginate { color: #cbd5e1 !important; font-size: 1rem !important; }
     table.dataTable tbody tr { background-color: #1e293b !important; color: #f8fafc !important; }
     table.dataTable tbody tr:hover { background-color: #334155 !important; }
+
+    /* Estilo Pantalla Completa para la Matriz */
+    .card:fullscreen {
+      background-color: #0f172a !important;
+      padding: 24px !important;
+      overflow-y: auto !important;
+    }
+    .card:fullscreen .card-body {
+      height: calc(100vh - 90px) !important;
+    }
+    .card:fullscreen .plotly {
+      height: 100% !important;
+    }
   "))
 )
 
@@ -262,8 +275,17 @@ ui <- page_navbar(
         )
       ),
       card(
-        card_header(span(icon("compass"), " Matriz de Cuadrantes de Eficiencia Colectiva (ORtg vs DRtg - Contexto Liga)")),
-        card_body(plotlyOutput("plot_ratings", height = "390px"))
+        full_screen = TRUE,
+        card_header(
+          class = "d-flex justify-content-between align-items-center",
+          span(icon("compass"), " Matriz de Cuadrantes de Eficiencia Colectiva (ORtg vs DRtg - Contexto Liga)"),
+          tags$button(
+            class = "btn btn-sm btn-outline-success rounded-pill px-3 py-1 fw-bold shadow-sm",
+            onclick = "var card = this.closest('.card'); if (!document.fullscreenElement) { card.requestFullscreen(); this.innerHTML = '<i class=\"fa fa-compress\"></i> Salir Pantalla Completa'; } else { document.exitFullscreen(); this.innerHTML = '<i class=\"fa fa-expand\"></i> Pantalla Completa'; }",
+            icon("expand"), " Pantalla Completa"
+          )
+        ),
+        card_body(plotlyOutput("plot_ratings", height = "410px"))
       )
     )
   ),
