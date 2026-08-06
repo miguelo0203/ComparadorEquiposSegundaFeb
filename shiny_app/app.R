@@ -1,5 +1,5 @@
 # ==============================================================================
-# SEGUNDA FEB PRO - ELITE DARK ANALYTICS PLATFORM (FULLSCREEN MATRIX & BOOTSTRAP UI)
+# SEGUNDA FEB - PLATA DE ANALÍTICA & SCOUTING (EDICIÓN NORMALIZADA)
 # ==============================================================================
 
 library(shiny)
@@ -74,7 +74,7 @@ model_glm_global <- glm(
 
 dbDisconnect(init_con)
 
-# Tema Estético Elite Dark Analytics Theme
+# Tema Estético Analytics Theme
 theme_custom <- bs_theme(
   bg = "#0f172a",
   fg = "#f8fafc",
@@ -87,7 +87,7 @@ theme_custom <- bs_theme(
   base_font = font_google("Inter")
 )
 
-# Estilos CSS Personalizados con Tipografía Ampliada y Pantalla Completa
+# Estilos CSS Personalizados con Tipografía Limpia
 custom_css <- tags$head(
   tags$style(HTML("
     body {
@@ -186,7 +186,6 @@ custom_css <- tags$head(
     table.dataTable tbody tr { background-color: #1e293b !important; color: #f8fafc !important; }
     table.dataTable tbody tr:hover { background-color: #334155 !important; }
 
-    /* Estilo Pantalla Completa para la Matriz */
     .card:fullscreen {
       background-color: #0f172a !important;
       padding: 24px !important;
@@ -201,7 +200,7 @@ custom_css <- tags$head(
   "))
 )
 
-# Helper Global para Estandarización Oscura de Plotly con Fuente Mayor
+# Helper Global para Estandarización Oscura de Plotly
 theme_plotly_dark <- function(fig) {
   fig %>% layout(
     paper_bgcolor = "rgba(0,0,0,0)",
@@ -219,20 +218,20 @@ ui <- page_navbar(
   theme = theme_custom,
   title = span(
     img(src = "https://baloncestoenvivo.feb.es/Images/logo-feb.png", height = "34px", style = "margin-right: 12px; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));"),
-    strong("SEGUNDA FEB PRO"), span(" | Elite Analytics System", style = "font-weight: 300; opacity: 0.85; color: #94a3b8;")
+    strong("SEGUNDA FEB"), span(" | Análisis y Scouting de Baloncesto", style = "font-weight: 300; opacity: 0.85; color: #94a3b8;")
   ),
   bg = "#0b0f19",
   
   # ----------------------------------------------------------------------------
-  # PESTAÑA 1: TEAM MATCHUP ENGINE & ADAPTIVE NLG
+  # PESTAÑA 1: COMPARATIVA DE EQUIPOS
   # ----------------------------------------------------------------------------
   nav_panel(
-    title = "Team Matchup Engine",
+    title = "Comparativa de Equipos",
     icon = icon("shield-halved"),
     layout_sidebar(
       sidebar = sidebar(
         width = 330,
-        title = "Configurador de Encuentro",
+        title = "Selección de Equipos",
         selectInput("team_local", "Equipo Local (Home):", 
                     choices = setNames(equipos_list$id_equipo, equipos_list$nombre_oficial),
                     selected = equipos_list$id_equipo[1]),
@@ -240,7 +239,7 @@ ui <- page_navbar(
                     choices = setNames(equipos_list$id_equipo, equipos_list$nombre_oficial),
                     selected = equipos_list$id_equipo[2]),
         hr(),
-        helpText("Analiza la eficiencia corregida por 100 posesiones, los Four Factors de Dean Oliver y la narrativa táctica adaptativa.")
+        helpText("Analiza el ritmo, la eficiencia por 100 posesiones y los Four Factors.")
       ),
       layout_columns(
         fill = FALSE,
@@ -251,7 +250,7 @@ ui <- page_navbar(
           theme = "primary"
         ),
         value_box(
-          title = "Net Rating Differential",
+          title = "Diferencial de Net Rating",
           value = textOutput("vb_net_diff"),
           showcase = icon("chart-line"),
           theme = "info"
@@ -266,11 +265,11 @@ ui <- page_navbar(
       layout_columns(
         col_widths = c(7, 5),
         card(
-          card_header(span(icon("chart-bar"), " Comparativa de los Four Factors de Dean Oliver")),
+          card_header(span(icon("chart-bar"), " Four Factors de Dean Oliver")),
           card_body(plotlyOutput("plot_four_factors", height = "370px"))
         ),
         card(
-          card_header(span(icon("brain"), " Motor de Narrativa Táctica Adaptativa (Detección de Anomalías)")),
+          card_header(span(icon("file-text"), " Informe Analítico del Partido")),
           card_body(class = "scroll-panel", uiOutput("ui_tactical_narrative"))
         )
       ),
@@ -278,7 +277,7 @@ ui <- page_navbar(
         full_screen = TRUE,
         card_header(
           class = "d-flex justify-content-between align-items-center",
-          span(icon("compass"), " Matriz de Cuadrantes de Eficiencia Colectiva (ORtg vs DRtg - Contexto Liga)"),
+          span(icon("compass"), " Eficiencia Ofensiva vs Defensiva (ORtg / DRtg)"),
           tags$button(
             class = "btn btn-sm btn-outline-success rounded-pill px-3 py-1 fw-bold shadow-sm",
             onclick = "var card = this.closest('.card'); if (!document.fullscreenElement) { card.requestFullscreen(); this.innerHTML = '<i class=\"fa fa-compress\"></i> Salir Pantalla Completa'; } else { document.exitFullscreen(); this.innerHTML = '<i class=\"fa fa-expand\"></i> Pantalla Completa'; }",
@@ -291,81 +290,81 @@ ui <- page_navbar(
   ),
   
   # ----------------------------------------------------------------------------
-  # PESTAÑA 2: PLAYER SCOUTING & INTEGRAL DOSSIER
+  # PESTAÑA 2: FICHA DE JUGADOR
   # ----------------------------------------------------------------------------
   nav_panel(
-    title = "Player Scouting & Dossier",
-    icon = icon("user-ninja"),
+    title = "Ficha de Jugador",
+    icon = icon("user"),
     layout_sidebar(
       sidebar = sidebar(
         width = 310,
-        title = "Filtro de Scouting",
+        title = "Filtro de Jugador",
         selectInput("scout_team", "Filtrar por Equipo:", 
                     choices = c("Todos" = 0, setNames(equipos_list$id_equipo, equipos_list$nombre_oficial)),
                     selected = 0),
         uiOutput("ui_scout_player"),
         hr(),
-        helpText("Percentiles posicionales y métricas de estabilidad calculados mediante estadística robusta (Mediana, MAD & CV).")
+        helpText("Percentiles posicionales y métricas de estabilidad (Mediana, MAD y CV).")
       ),
       layout_columns(
         col_widths = c(5, 7),
         card(
-          card_header(span(icon("id-card"), " Ficha Técnica & Índice de Regularidad")),
+          card_header(span(icon("id-card"), " Ficha de Jugador & Estabilidad")),
           card_body(uiOutput("card_player_bio"))
         ),
         card(
-          card_header(span(icon("chart-pie"), " Radar Posicional de Percentiles (0 - 100)")),
+          card_header(span(icon("chart-pie"), " Radar de Percentiles (0 - 100)")),
           card_body(plotlyOutput("plot_player_radar", height = "390px"))
         )
       ),
       card(
-        card_header(span(icon("file-lines"), " Informe Analítico Automatizado de Scouting (NLG)")),
+        card_header(span(icon("file-lines"), " Informe del Jugador")),
         card_body(class = "scroll-panel", uiOutput("ui_player_nlg_report"))
       ),
       card(
-        card_header(span(icon("table-cells"), " Tabla Completa de Estadísticas de Pista & Percentiles en la Liga")),
+        card_header(span(icon("table-cells"), " Estadísticas & Percentiles en la Liga")),
         card_body(uiOutput("ui_player_stats_table"))
       )
     )
   ),
   
   # ----------------------------------------------------------------------------
-  # PESTAÑA 3: RECRUITMENT FINDER (MERCADO & CLUSTERING)
+  # PESTAÑA 3: BUSCADOR DE JUGADORES
   # ----------------------------------------------------------------------------
   nav_panel(
-    title = "Recruitment Finder",
-    icon = icon("magnifying-glass-chart"),
+    title = "Buscador de Jugadores",
+    icon = icon("magnifying-glass"),
     layout_sidebar(
       sidebar = sidebar(
         width = 330,
-        title = "Scouting de Mercado",
+        title = "Filtros de Búsqueda",
         sliderInput("filter_ppg40", "Mínimo Puntos / 40 min:", min = 0, max = 30, value = 10, step = 1),
         sliderInput("filter_ts", "Mínimo True Shooting %:", min = 30, max = 80, value = 45, step = 2),
         sliderInput("filter_val40", "Mínimo Valoración / 40 min:", min = 0, max = 40, value = 10, step = 1),
         selectInput("filter_posicion", "Posición Nominal:", choices = posiciones_list, selected = "Todas"),
-        checkboxGroupInput("filter_arquetipos", "Arquetipos Tácticos (K-Means):",
+        checkboxGroupInput("filter_arquetipos", "Arquetipos de Jugador:",
                            choices = setNames(arquetipos_list$cluster_id, arquetipos_list$nombre_arquetipo),
                            selected = arquetipos_list$cluster_id),
         hr(),
-        helpText("Muestra del núcleo duro (>= 10 min/partido y >= 5 partidos).")
+        helpText("Muestra jugadores con al menos 10 min/partido y 5 partidos jugados.")
       ),
       card(
-        card_header(span(icon("table-list"), " Candidatos Identificados según Huella Estadística")),
+        card_header(span(icon("table-list"), " Resultados")),
         card_body(DT::dataTableOutput("table_recruitment"))
       )
     )
   ),
   
   # ----------------------------------------------------------------------------
-  # PESTAÑA 4: PREDICTOR & SIMULATOR
+  # PESTAÑA 4: SIMULADOR DE PARTIDOS
   # ----------------------------------------------------------------------------
   nav_panel(
-    title = "Predictor & Simulator",
-    icon = icon("robot"),
+    title = "Simulador de Partidos",
+    icon = icon("play"),
     layout_sidebar(
       sidebar = sidebar(
         width = 330,
-        title = "Simulador ML",
+        title = "Configuración",
         selectInput("sim_local", "Equipo Local (Home):", 
                     choices = setNames(equipos_list$id_equipo, equipos_list$nombre_oficial),
                     selected = equipos_list$id_equipo[1]),
@@ -375,7 +374,7 @@ ui <- page_navbar(
         hr(),
         actionButton("btn_simulate", "Simular Partido", class = "btn-success btn-lg w-100", icon = icon("play")),
         hr(),
-        helpText("Aplica el modelo predictivo logístico (AUC = 0.9867) evaluando Four Factors y Net Rating.")
+        helpText("Aplica el modelo de regresión evaluando Four Factors y Net Rating.")
       ),
       layout_columns(
         fill = FALSE,
@@ -399,31 +398,31 @@ ui <- page_navbar(
         )
       ),
       card(
-        card_header(span(icon("sliders"), " Barra Visual de Probabilidades (Win Probability Gauge)")),
+        card_header(span(icon("sliders"), " Probabilidad de Victoria")),
         card_body(uiOutput("ui_sim_progress_bar"))
       ),
       card(
-        card_header(span(icon("list-check"), " Desglose de Factores Clave Diferenciales")),
+        card_header(span(icon("list-check"), " Factores Clave")),
         card_body(class = "scroll-panel", uiOutput("ui_sim_tactical_panel"))
       )
     )
   ),
   
   # ----------------------------------------------------------------------------
-  # PESTAÑA 5: TEAM EXECUTIVE SUMMARY (PARALLEL OUTLIER GRID LAYOUT)
+  # PESTAÑA 5: RESUMEN DE EQUIPO
   # ----------------------------------------------------------------------------
   nav_panel(
-    title = "Team Executive Summary",
+    title = "Resumen de Equipo",
     icon = icon("clipboard-check"),
     layout_sidebar(
       sidebar = sidebar(
         width = 330,
-        title = "Auditoría Directiva de Club",
-        selectInput("exec_team", "Seleccionar Equipo a Auditar:", 
+        title = "Selección de Equipo",
+        selectInput("exec_team", "Seleccionar Equipo:", 
                     choices = setNames(equipos_list$id_equipo, equipos_list$nombre_oficial),
                     selected = equipos_list$id_equipo[1]),
         hr(),
-        helpText("Informe ejecutivo de balance colectivo, ADN estilístico de plantilla (K-Means) y diagnóstico multivariable de outliers.")
+        helpText("Informe del balance colectivo, reparto de minutos y diagnóstico estadístico.")
       ),
       layout_columns(
         fill = FALSE,
@@ -434,7 +433,7 @@ ui <- page_navbar(
           theme = "primary"
         ),
         value_box(
-          title = "Concentración Anotadora (HHI)",
+          title = "Concentración de Puntos (HHI)",
           value = textOutput("vb_exec_hhi"),
           showcase = icon("bullseye"),
           theme = "warning"
@@ -447,11 +446,11 @@ ui <- page_navbar(
         )
       ),
       card(
-        card_header(span(icon("chart-pie"), " ADN Estilístico de Plantilla (% Minutos por Arquetipo K-Means)")),
+        card_header(span(icon("chart-pie"), " Reparto de Minutos por Arquetipo")),
         card_body(plotlyOutput("plot_exec_fingerprint", height = "330px"))
       ),
       card(
-        card_header(span(icon("chart-line"), " Diagnóstico Estadístico Descriptivo (Motor de Detección de Outliers - Vista Paralela)")),
+        card_header(span(icon("chart-line"), " Diagnóstico Estadístico del Equipo")),
         card_body(style = "padding: 22px; font-size: 1.05rem; line-height: 1.7; color: #e2e8f0;", uiOutput("ui_exec_expert_panel"))
       )
     )
@@ -521,47 +520,47 @@ server <- function(input, output, session) {
     if (abs(diff_net) >= 4.0) {
       outliers$net <- list(
         score = abs(diff_net) / 4.0,
-        text = if (diff_net > 0) sprintf("<strong>Diferencial Dominante de Eficiencia Colectiva:</strong> <strong>%s</strong> establece una ventaja crítica en Net Rating (+%0.1f pts/100 poss), imponiendo una solidez global netamente superior a <strong>%s</strong>.", nom_loc, diff_net, nom_vis)
-               else sprintf("<strong>Diferencial Dominante de Eficiencia Colectiva:</strong> <strong>%s</strong> lidera la solidez global del choque con una ventaja de Net Rating de +%0.1f pts/100 poss frente a <strong>%s</strong>.", nom_vis, abs(diff_net), nom_loc)
+        text = if (diff_net > 0) sprintf("<strong>Diferencial de Eficiencia Colectiva:</strong> <strong>%s</strong> tiene una ventaja en Net Rating (+%0.1f pts/100 poss) frente a <strong>%s</strong>.", nom_loc, diff_net, nom_vis)
+               else sprintf("<strong>Diferencial de Eficiencia Colectiva:</strong> <strong>%s</strong> lidera el Net Rating con +%0.1f pts/100 poss frente a <strong>%s</strong>.", nom_vis, abs(diff_net), nom_loc)
       )
     }
     
     if (abs(diff_efg) >= 3.5) {
       outliers$efg <- list(
         score = abs(diff_efg) / 3.5,
-        text = if (diff_efg > 0) sprintf("<strong>Brecha en Efectividad de Tiro (eFG%%):</strong> La efectividad pura favorece marcadamente a <strong>%s</strong> (+%0.1f%% en eFG%%), condicionando la estructura defensiva de <strong>%s</strong> en el perímetro.", nom_loc, diff_efg, nom_vis)
-               else sprintf("<strong>Brecha en Efectividad de Tiro (eFG%%):</strong> <strong>%s</strong> ostenta un acierto superior (+%0.1f%% en eFG%%), obligando a <strong>%s</strong> a estrechar sus rotaciones defensivas exteriores.", nom_vis, abs(diff_efg), nom_loc)
+        text = if (diff_efg > 0) sprintf("<strong>Efectividad de Tiro (eFG%%):</strong> <strong>%s</strong> registra mayor acierto (+%0.1f%% en eFG%%) que <strong>%s</strong>.", nom_loc, diff_efg, nom_vis)
+               else sprintf("<strong>Efectividad de Tiro (eFG%%):</strong> <strong>%s</strong> muestra un acierto superior (+%0.1f%% en eFG%%) frente a <strong>%s</strong>.", nom_vis, abs(diff_efg), nom_loc)
       )
     }
     
     if (abs(diff_tov) >= 3.0) {
       outliers$tov <- list(
         score = abs(diff_tov) / 3.0,
-        text = if (diff_tov < 0) sprintf("<strong>Control del Balón y Transición:</strong> <strong>%s</strong> retiene el balón con mayor disciplina (%0.1f%% menos pérdidas), amenazando con castigar los errores en transición de <strong>%s</strong>.", nom_loc, abs(diff_tov), nom_vis)
-               else sprintf("<strong>Peligro de Transición y Pérdidas:</strong> <strong>%s</strong> exhibe una tasa de pérdidas sensiblemente menor (%0.1f%% menos pérdidas), representando una amenaza de penalización directa al contraataque para <strong>%s</strong>.", nom_vis, diff_tov, nom_loc)
+        text = if (diff_tov < 0) sprintf("<strong>Control del Balón:</strong> <strong>%s</strong> pierde menos balones (%0.1f%% menos pérdidas) que <strong>%s</strong>.", nom_loc, abs(diff_tov), nom_vis)
+               else sprintf("<strong>Control del Balón:</strong> <strong>%s</strong> presenta una menor tasa de pérdidas (%0.1f%% menos pérdidas) que <strong>%s</strong>.", nom_vis, diff_tov, nom_loc)
       )
     }
     
     if (abs(diff_oreb) >= 5.0) {
       outliers$oreb <- list(
         score = abs(diff_oreb) / 5.0,
-        text = if (diff_oreb > 0) sprintf("<strong>Dominio en Tablero de Ataque:</strong> <strong>%s</strong> impone su presencia física bajo el aro ofensivo (+%0.1f%% en OREB%%), garantizando posesiones de segunda opción decisivas.", nom_loc, diff_oreb)
-               else sprintf("<strong>Dominio en Tablero de Ataque:</strong> <strong>%s</strong> asegura el control del rebote de ataque (+%0.1f%% en OREB%%), generando posesiones extra continuadas.", nom_vis, abs(diff_oreb))
+        text = if (diff_oreb > 0) sprintf("<strong>Rebote de Ataque:</strong> <strong>%s</strong> captura más rebotes ofensivos (+%0.1f%% en OREB%%) que <strong>%s</strong>.", nom_loc, diff_oreb, nom_vis)
+               else sprintf("<strong>Rebote de Ataque:</strong> <strong>%s</strong> controla el rebote en aro contrario (+%0.1f%% en OREB%%) frente a <strong>%s</strong>.", nom_vis, abs(diff_oreb), nom_loc)
       )
     }
     
     if (length(outliers) == 0) {
       paragraphs <- list(
-        sprintf("<strong>Máxima Paridad Estructural:</strong> Emparejamiento de extrema igualdad táctica entre <strong>%s</strong> y <strong>%s</strong>. Ningún factor estadístico de los Four Factors ni el Net Rating presenta una desviación crítica respecto al promedio, anticipando un duelo decidido en posesiones extremas a ritmo de <strong>%0.1f posesiones</strong>.", nom_loc, nom_vis, avg_pace)
+        sprintf("<strong>Paridad Estructural:</strong> Emparejamiento equilibrado entre <strong>%s</strong> y <strong>%s</strong>. No se aprecian diferencias sustanciales en los Four Factors ni en el Net Rating. El ritmo medio se sitúa en <strong>%0.1f posesiones</strong>.", nom_loc, nom_vis, avg_pace)
       )
     } else {
       sorted_keys <- names(outliers)[order(sapply(outliers, function(x) x$score), decreasing = TRUE)]
       paragraphs <- lapply(sorted_keys, function(k) outliers[[k]]$text)
       
       if (avg_pace >= 76.0) {
-        paragraphs[[length(paragraphs) + 1]] <- sprintf("<strong>Ritmo Vértigo:</strong> El choque se proyecta a un ritmo veloz de <strong>%0.1f posesiones</strong>, propicio para transiciones dinámicas.", avg_pace)
+        paragraphs[[length(paragraphs) + 1]] <- sprintf("<strong>Ritmo de Juego:</strong> El partido se proyecta a un ritmo alto de <strong>%0.1f posesiones</strong>.", avg_pace)
       } else if (avg_pace <= 70.0) {
-        paragraphs[[length(paragraphs) + 1]] <- sprintf("<strong>Ritmo Controlado:</strong> Encuentro de bajo ritmo (<strong>%0.1f posesiones</strong>), donde el control del juego posicional en 5 contra 5 será determinante.", avg_pace)
+        paragraphs[[length(paragraphs) + 1]] <- sprintf("<strong>Ritmo de Juego:</strong> Encuentro proyectado a bajo ritmo (<strong>%0.1f posesiones</strong>).", avg_pace)
       }
     }
     
@@ -669,7 +668,7 @@ server <- function(input, output, session) {
              line = list(color = '#334155', dash = 'dash', width = 1))
       ),
       annotations = list(
-        list(x = mean_drtg - 4, y = max(df_all_teams$ortg) + 1, text = "<b>ÉLITE (Alta Eficiencia)</b>", showarrow = FALSE, font = list(color = "#10b981", size = 12)),
+        list(x = mean_drtg - 4, y = max(df_all_teams$ortg) + 1, text = "<b>ALTA EFICIENCIA</b>", showarrow = FALSE, font = list(color = "#10b981", size = 12)),
         list(x = mean_drtg + 4, y = max(df_all_teams$ortg) + 1, text = "<b>PERFIL OFENSIVO</b>", showarrow = FALSE, font = list(color = "#3b82f6", size = 12)),
         list(x = mean_drtg - 4, y = min(df_all_teams$ortg) - 1, text = "<b>PERFIL DEFENSIVO</b>", showarrow = FALSE, font = list(color = "#f59e0b", size = 12)),
         list(x = mean_drtg + 4, y = min(df_all_teams$ortg) - 1, text = "<b>EN CONSTRUCCIÓN</b>", showarrow = FALSE, font = list(color = "#ef4444", size = 12))
@@ -735,7 +734,6 @@ server <- function(input, output, session) {
       WHERE id_jugador = %s AND minutos_decimal > 0;
     ", pid)) %>% mutate(across(everything(), as.numeric))
     
-    # Calculate all stats & percentiles across all 443 active players in the league
     df_all_league <- dbGetQuery(con, "
       SELECT 
         j.id_jugador,
@@ -780,8 +778,8 @@ server <- function(input, output, session) {
         pctil_apg     = percent_rank(apg) * 100,
         pctil_spg     = percent_rank(spg) * 100,
         pctil_bpg     = percent_rank(bpg) * 100,
-        pctil_topg    = (1 - percent_rank(topg)) * 100, # Menos pérdidas = Mejor percentil
-        pctil_fpg     = (1 - percent_rank(fpg)) * 100,  # Menos faltas = Mejor percentil
+        pctil_topg    = (1 - percent_rank(topg)) * 100,
+        pctil_fpg     = (1 - percent_rank(fpg)) * 100,
         pctil_val     = percent_rank(val_pg) * 100,
         pctil_val40   = percent_rank(val40) * 100,
         pctil_ppg40   = percent_rank(ppg40) * 100,
@@ -797,7 +795,6 @@ server <- function(input, output, session) {
     
     p_stat <- df_perc %>% filter(id_jugador == as.numeric(pid))
     
-    # Benchmark posicional
     pos_nom <- df_bio$puesto_posicion[1]
     df_pos_all <- dbGetQuery(con, sprintf("
       SELECT pas.ts_pct, pas.usg_pct, pas.valoracion_per40
@@ -819,11 +816,11 @@ server <- function(input, output, session) {
     val_cv <- if (!is.na(val_mean) && val_mean > 0) val_sd / val_mean else 0.5
     
     stability_label <- if (val_cv < 0.35) {
-      "Altamente Consistente"
+      "Muy Consistente"
     } else if (val_cv <= 0.60) {
       "Rendimiento Estable"
     } else {
-      "Volátil / Boom-or-Bust"
+      "Rendimiento Variable"
     }
     
     list(
@@ -904,7 +901,6 @@ server <- function(input, output, session) {
     fig
   })
   
-  # TABLA ENRICHED BOOTSTRAP 5 DE TODAS LAS ESTADÍSTICAS & PERCENTILES EN LA LIGA
   output$ui_player_stats_table <- renderUI({
     d <- player_data()
     s <- d$stats
@@ -983,13 +979,13 @@ server <- function(input, output, session) {
     
     if (nrow(s) == 0) return(NULL)
     
-    p1 <- sprintf("<strong>Rol y Carga de Posesiones:</strong> Clasificado bajo el arquetipo K-Means <strong>%s</strong>, consume un <strong>%0.1f%% de USG%%</strong> (%+0.1f%% respecto a la mediana de su posición: %0.1f%%).",
+    p1 <- sprintf("<strong>Uso de Posesiones:</strong> Clasificado como <strong>%s</strong>, registra un <strong>%0.1f%% de USG%%</strong> (%+0.1f%% respecto a la mediana de su posición: %0.1f%%).",
                   b$nombre_arquetipo, s$usg_pct[1], s$usg_pct[1] - bc$med_usg[1], bc$med_usg[1])
     
-    p2 <- sprintf("<strong>Eficiencia de Anotación:</strong> Registra un <strong>%0.1f%% en True Shooting (TS%%)</strong> (%+0.1f%% sobre la mediana posicional), ubicándose en el <strong>percentil %0.1f</strong> de la liga en valoración global por partido.",
+    p2 <- sprintf("<strong>Efectividad de Tiro:</strong> Registra un <strong>%0.1f%% en True Shooting (TS%%)</strong> (%+0.1f%% sobre la mediana posicional), situándose en el <strong>percentil %0.1f</strong> de la liga en valoración por partido.",
                   s$ts_pct[1], s$ts_pct[1] - bc$med_ts[1], s$pctil_val[1])
     
-    p3 <- sprintf("<strong>Veredicto de Estabilidad:</strong> Presenta un Coeficiente de Variación (CV) de <strong>%0.2f</strong> y una MAD de <strong>%0.1f val</strong>, catalogándose como un jugador <strong>%s</strong>.",
+    p3 <- sprintf("<strong>Estabilidad de Rendimiento:</strong> Presenta un Coeficiente de Variación (CV) de <strong>%0.2f</strong> y una MAD de <strong>%0.1f val</strong> (%s).",
                   d$cv, d$mad, d$stability)
     
     tagList(
@@ -1000,7 +996,7 @@ server <- function(input, output, session) {
   })
   
   # ----------------------------------------------------------------------------
-  # REACTIVOS - RECRUITMENT FINDER (FILTRO POSICIÓN DESCONOCIDA)
+  # REACTIVOS - BUSCADOR DE JUGADORES
   # ----------------------------------------------------------------------------
   recruitment_data <- reactive({
     con <- get_db_con()
@@ -1062,7 +1058,7 @@ server <- function(input, output, session) {
   })
   
   # ----------------------------------------------------------------------------
-  # REACTIVOS - PREDICTOR & SIMULATOR
+  # REACTIVOS - SIMULADOR DE PARTIDOS
   # ----------------------------------------------------------------------------
   simulation_result <- eventReactive(input$btn_simulate, {
     req(input$sim_local, input$sim_visitor)
@@ -1158,12 +1154,12 @@ server <- function(input, output, session) {
         tags$li(sprintf("Diferencial en Control de Pérdidas (TOV%%): %+0.1f%%", res$diff_tov)),
         tags$li(sprintf("Dominio del Rebote Ofensivo (OREB%%): %+0.1f%%", res$diff_oreb))
       ),
-      p(em("Modelo evaluado con 94.12% de precisión histórica y AUC = 0.9867 en partidos oficiales de Segunda FEB."), style = "font-size: 0.95rem; color: #94a3b8; margin-top: 12px;")
+      p(em("Modelo evaluado en partidos oficiales de Segunda FEB (AUC = 0.9867)."), style = "font-size: 0.95rem; color: #94a3b8; margin-top: 12px;")
     )
   })
 
   # ----------------------------------------------------------------------------
-  # REACTIVOS - TEAM EXECUTIVE SUMMARY (MOTOR DINÁMICO DE OUTLIERS PARALELO)
+  # REACTIVOS - RESUMEN DE EQUIPO (DIAGNÓSTICO PARALELO)
   # ----------------------------------------------------------------------------
   exec_team_data <- reactive({
     req(input$exec_team)
@@ -1234,7 +1230,7 @@ server <- function(input, output, session) {
       group_by(id_equipo) %>%
       summarise(
         tot_m = sum(minutos_totales, na.rm = TRUE),
-        str_m = sum(minutos_totales[arquetipo %in% c("Stretch Big / Pívot Abierto Físico", "Off-Ball Specialist / Especialista Catch & Shoot", "3&D Wing / Alero Espaciador")], na.rm = TRUE),
+        str_m = sum(minutos_totales[arquetipo %in% c("Pívot Abierto", "Tirador Catch & Shoot", "Alero 3&D")], na.rm = TRUE),
         spacing_pct = if (tot_m > 0) (str_m / tot_m) * 100 else 0,
         .groups = "drop"
       )
@@ -1297,7 +1293,7 @@ server <- function(input, output, session) {
     fig
   })
 
-  # MOTOR DINÁMICO DE DETECCIÓN DE OUTLIERS MULTIVARIABLE (BOOTSTRAP PARALLEL GRID WITH LARGER TYPOGRAPHY)
+  # MOTOR DINÁMICO DE DETECCIÓN DE OUTLIERS MULTIVARIABLE (TITULARES Y TEXTOS NORMALIZADOS)
   output$ui_exec_expert_panel <- renderUI({
     d <- exec_team_data()
     t <- d$target
@@ -1324,15 +1320,15 @@ server <- function(input, output, session) {
     if (abs(z_efg) >= 1.0) {
       outlier_cards$efg <- if (z_efg > 0) {
         div(class = "card p-4 h-100 bg-dark text-light", style = "border: 1px solid #10b981; border-radius: 12px;",
-            span("📊 EFICIENCIA DE TIRO ÉLITE (eFG%)", class = "badge bg-success mb-3"),
-            h5("Alta Efectividad Exterior", style = "color: #10b981; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
-            p(HTML(sprintf("El equipo registra un <strong>%0.1f%% en eFG%%</strong> (+%0.1f DE sobre la media de la liga: %0.1f%%), consolidándose entre las ofensivas de tiro más efectivas de la categoría.", t$efg[1], z_efg, m$efg[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
+            span("📊 EFECTIVIDAD DE TIRO (eFG%)", class = "badge bg-success mb-3"),
+            h5("Acierto Superior", style = "color: #10b981; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
+            p(HTML(sprintf("El equipo registra un <strong>%0.1f%% en eFG%%</strong> (+%0.1f DE sobre la media: %0.1f%%).", t$efg[1], z_efg, m$efg[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
         )
       } else {
         div(class = "card p-4 h-100 bg-dark text-light", style = "border: 1px solid #ef4444; border-radius: 12px;",
-            span("📊 DEFICIT EN EFECTIVIDAD DE TIRO", class = "badge bg-danger mb-3"),
-            h5("Compresión en Acierto", style = "color: #ef4444; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
-            p(HTML(sprintf("Presenta un eFG%% reducido del <strong>%0.1f%%</strong> (%0.1f DE por debajo de la media de la categoría: %0.1f%%), requiriendo un mayor volumen de lanzamientos.", t$efg[1], abs(z_efg), m$efg[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
+            span("📊 EFECTIVIDAD DE TIRO (eFG%)", class = "badge bg-danger mb-3"),
+            h5("Acierto Reducido", style = "color: #ef4444; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
+            p(HTML(sprintf("Presenta un eFG%% del <strong>%0.1f%%</strong> (%0.1f DE por debajo de la media: %0.1f%%).", t$efg[1], abs(z_efg), m$efg[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
         )
       }
     }
@@ -1341,15 +1337,15 @@ server <- function(input, output, session) {
     if (abs(z_tov) >= 1.0) {
       outlier_cards$tov <- if (z_tov > 0) {
         div(class = "card p-4 h-100 bg-dark text-light", style = "border: 1px solid #ef4444; border-radius: 12px;",
-            span("📊 ELEVADA TASA DE PÉRDIDAS (TOV%)", class = "badge bg-danger mb-3"),
-            h5("Vulnerabilidad en Posesión", style = "color: #ef4444; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
-            p(HTML(sprintf("El colectivo cede un <strong>%0.1f%%</strong> de sus posesiones en pérdidas (+%0.1f DE sobre la media: %0.1f%%), comprometiendo el balance defensivo.", t$tov[1], z_tov, m$tov[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
+            span("📊 TASA DE PÉRDIDAS (TOV%)", class = "badge bg-danger mb-3"),
+            h5("Alto Volumen de Pérdidas", style = "color: #ef4444; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
+            p(HTML(sprintf("El equipo pierde el <strong>%0.1f%%</strong> de sus posesiones (+%0.1f DE sobre la media: %0.1f%%).", t$tov[1], z_tov, m$tov[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
         )
       } else {
         div(class = "card p-4 h-100 bg-dark text-light", style = "border: 1px solid #10b981; border-radius: 12px;",
-            span("📊 CUIDADO Y DISCIPLINA DEL BALÓN", class = "badge bg-success mb-3"),
-            h5("Alta Seguridad en Pase", style = "color: #10b981; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
-            p(HTML(sprintf("Retiene el balón con firmeza, conteniendo sus pérdidas en un <strong>%0.1f%%</strong> (%0.1f DE por debajo de la media: %0.1f%%).", t$tov[1], abs(z_tov), m$tov[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
+            span("📊 CONTROL DE PÉRDIDAS", class = "badge bg-success mb-3"),
+            h5("Buen Control del Balón", style = "color: #10b981; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
+            p(HTML(sprintf("Contiene las pérdidas en un <strong>%0.1f%%</strong> (%0.1f DE por debajo de la media: %0.1f%%).", t$tov[1], abs(z_tov), m$tov[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
         )
       }
     }
@@ -1358,15 +1354,15 @@ server <- function(input, output, session) {
     if (abs(z_oreb) >= 1.0) {
       outlier_cards$oreb <- if (z_oreb > 0) {
         div(class = "card p-4 h-100 bg-dark text-light", style = "border: 1px solid #06b6d4; border-radius: 12px;",
-            span("📊 DOMINIO EN REBOTE DE ATAQUE (OREB%)", class = "badge bg-info mb-3"),
-            h5("Segundas Opciones Garantizadas", style = "color: #06b6d4; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
-            p(HTML(sprintf("Atrapa un <strong>%0.1f%%</strong> de los rebotes disponibles en aro rival (+%0.1f DE sobre la media: %0.1f%%), dominando la zona interior.", t$oreb[1], z_oreb, m$oreb[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
+            span("📊 REBOTE OFENSIVO (OREB%)", class = "badge bg-info mb-3"),
+            h5("Alto Rebote de Ataque", style = "color: #06b6d4; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
+            p(HTML(sprintf("Atrapa un <strong>%0.1f%%</strong> de los rebotes de ataque (+%0.1f DE sobre la media: %0.1f%%).", t$oreb[1], z_oreb, m$oreb[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
         )
       } else {
         div(class = "card p-4 h-100 bg-dark text-light", style = "border: 1px solid #f59e0b; border-radius: 12px;",
-            span("📊 BAJO REBOTE OFENSIVO", class = "badge bg-warning mb-3"),
-            h5("Limitación en 2ª Opción", style = "color: #f59e0b; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
-            p(HTML(sprintf("La captura en aro de ataque se sitúa en el <strong>%0.1f%%</strong> (%0.1f DE por debajo de la media: %0.1f%%), reduciendo sus ataques secundarios.", t$oreb[1], abs(z_oreb), m$oreb[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
+            span("📊 REBOTE OFENSIVO (OREB%)", class = "badge bg-warning mb-3"),
+            h5("Bajo Rebote de Ataque", style = "color: #f59e0b; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
+            p(HTML(sprintf("La captura en ataque se sitúa en un <strong>%0.1f%%</strong> (%0.1f DE por debajo de la media: %0.1f%%).", t$oreb[1], abs(z_oreb), m$oreb[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
         )
       }
     }
@@ -1375,15 +1371,15 @@ server <- function(input, output, session) {
     if (abs(z_ftr) >= 1.0) {
       outlier_cards$ftr <- if (z_ftr > 0) {
         div(class = "card p-4 h-100 bg-dark text-light", style = "border: 1px solid #3b82f6; border-radius: 12px;",
-            span("📊 ALTA PRODUCCIÓN EN TIRO LIBRE (FT Rate)", class = "badge bg-primary mb-3"),
-            h5("Provocación de Faltas", style = "color: #3b82f6; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
-            p(HTML(sprintf("Registra un FT Rate del <strong>%0.1f%%</strong> (+%0.1f DE sobre la media: %0.1f%%), forzando situaciones constantes de tiro libre.", t$ftr[1], z_ftr, m$ftr[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
+            span("📊 TIROS LIBRES (FT Rate)", class = "badge bg-primary mb-3"),
+            h5("Alto Volumen de Tiros Libres", style = "color: #3b82f6; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
+            p(HTML(sprintf("Registra un FT Rate del <strong>%0.1f%%</strong> (+%0.1f DE sobre la media: %0.1f%%).", t$ftr[1], z_ftr, m$ftr[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
         )
       } else {
         div(class = "card p-4 h-100 bg-dark text-light", style = "border: 1px solid #94a3b8; border-radius: 12px;",
-            span("📊 POCO VOLUMEN DE TIROS LIBRES", class = "badge bg-secondary mb-3"),
-            h5("Ataque Perimetral Periférico", style = "color: #94a3b8; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
-            p(HTML(sprintf("Muestra una tasa FT Rate de solo <strong>%0.1f%%</strong> (%0.1f DE por debajo de la media: %0.1f%%), con baja penetración a la zona castigada.", t$ftr[1], abs(z_ftr), m$ftr[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
+            span("📊 TIROS LIBRES (FT Rate)", class = "badge bg-secondary mb-3"),
+            h5("Bajo Volumen de Tiros Libres", style = "color: #94a3b8; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
+            p(HTML(sprintf("Muestra una tasa FT Rate del <strong>%0.1f%%</strong> (%0.1f DE por debajo de la media: %0.1f%%).", t$ftr[1], abs(z_ftr), m$ftr[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
         )
       }
     }
@@ -1392,15 +1388,15 @@ server <- function(input, output, session) {
     if (abs(z_hhi) >= 1.0) {
       outlier_cards$hhi <- if (z_hhi > 0) {
         div(class = "card p-4 h-100 bg-dark text-light", style = "border: 1px solid #f59e0b; border-radius: 12px;",
-            span("📊 CONCENTRACIÓN ANOTADORA ELEVADA (HHI)", class = "badge bg-warning mb-3"),
-            h5("Dependencia de Estiletes", style = "color: #f59e0b; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
-            p(HTML(sprintf("Índice HHI del <strong>%0.1f%%</strong> (+%0.1f DE sobre la media: %0.1f%%), reflejando concentración de puntos en pocas manos.", t$hhi[1], z_hhi, m$hhi[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
+            span("📊 CONCENTRACIÓN DE PUNTOS (HHI)", class = "badge bg-warning mb-3"),
+            h5("Anotación Concentrada", style = "color: #f59e0b; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
+            p(HTML(sprintf("Índice HHI del <strong>%0.1f%%</strong> (+%0.1f DE sobre la media: %0.1f%%).", t$hhi[1], z_hhi, m$hhi[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
         )
       } else {
         div(class = "card p-4 h-100 bg-dark text-light", style = "border: 1px solid #10b981; border-radius: 12px;",
-            span("📊 DISTRIBUCIÓN ANOTADORA CORAL (HHI)", class = "badge bg-success mb-3"),
-            h5("Ataque Multidimensional", style = "color: #10b981; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
-            p(HTML(sprintf("Índice HHI reducido del <strong>%0.1f%%</strong> (%0.1f DE por debajo de la media: %0.1f%%), repartiendo la anotación entre la plantilla.", t$hhi[1], abs(z_hhi), m$hhi[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
+            span("📊 CONCENTRACIÓN DE PUNTOS (HHI)", class = "badge bg-success mb-3"),
+            h5("Anotación Repartida", style = "color: #10b981; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
+            p(HTML(sprintf("Índice HHI del <strong>%0.1f%%</strong> (%0.1f DE por debajo de la media: %0.1f%%).", t$hhi[1], abs(z_hhi), m$hhi[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
         )
       }
     }
@@ -1409,15 +1405,15 @@ server <- function(input, output, session) {
     if (abs(z_rot) >= 1.0) {
       outlier_cards$rot <- if (z_rot > 0) {
         div(class = "card p-4 h-100 bg-dark text-light", style = "border: 1px solid #f59e0b; border-radius: 12px;",
-            span("📊 SOBRE-CARGA DE QUINTETO TITULAR", class = "badge bg-warning mb-3"),
-            h5("Alta Concentración de Minutos", style = "color: #f59e0b; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
-            p(HTML(sprintf("Los 5 principales titulares consumen el <strong>%0.1f%%</strong> del tiempo (+%0.1f DE sobre la media: %0.1f%%), con rotación ajustada del banquillo.", t$top5_pct[1], z_rot, m$top5_pct[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
+            span("📊 USO DE TITULARES", class = "badge bg-warning mb-3"),
+            h5("Carga Alta de Titulares", style = "color: #f59e0b; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
+            p(HTML(sprintf("Los 5 principales titulares juegan el <strong>%0.1f%%</strong> de los minutos (+%0.1f DE sobre la media: %0.1f%%).", t$top5_pct[1], z_rot, m$top5_pct[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
         )
       } else {
         div(class = "card p-4 h-100 bg-dark text-light", style = "border: 1px solid #06b6d4; border-radius: 12px;",
-            span("📊 ROTACIÓN PROFUNDA DE BENCH", class = "badge bg-info mb-3"),
-            h5("Reparto Equilibrado de Esfuerzos", style = "color: #06b6d4; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
-            p(HTML(sprintf("Los 5 titulares absorben solo el <strong>%0.1f%%</strong> de los minutos (%0.1f DE por debajo de la media: %0.1f%%), apoyándose en la segunda unidad.", t$top5_pct[1], abs(z_rot), m$top5_pct[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
+            span("📊 ROTACIÓN DE BANQUILLO", class = "badge bg-info mb-3"),
+            h5("Rotación Amplia de Banquillo", style = "color: #06b6d4; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
+            p(HTML(sprintf("Los 5 titulares disputan solo el <strong>%0.1f%%</strong> de los minutos (%0.1f DE por debajo de la media: %0.1f%%).", t$top5_pct[1], abs(z_rot), m$top5_pct[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
         )
       }
     }
@@ -1426,15 +1422,15 @@ server <- function(input, output, session) {
     if (abs(z_space) >= 1.0) {
       outlier_cards$space <- if (z_space > 0) {
         div(class = "card p-4 h-100 bg-dark text-light", style = "border: 1px solid #10b981; border-radius: 12px;",
-            span("📊 ESPACIADO AMENAZA LEJANA (SPACING%)", class = "badge bg-success mb-3"),
-            h5("Espacio Perimetral Amplio", style = "color: #10b981; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
-            p(HTML(sprintf("Un <strong>%0.1f%%</strong> de los minutos proviene de arquetipos con amenaza exterior (+%0.1f DE sobre la media: %0.1f%%), abriendo la pintura rival.", t$spacing_pct[1], z_space, m$spacing_pct[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
+            span("📊 TIRO EXTERIOR (SPACING%)", class = "badge bg-success mb-3"),
+            h5("Mayor Espacio Exterior", style = "color: #10b981; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
+            p(HTML(sprintf("Un <strong>%0.1f%%</strong> de los minutos corresponde a jugadores exteriores/tiradores (+%0.1f DE sobre la media: %0.1f%%).", t$spacing_pct[1], z_space, m$spacing_pct[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
         )
       } else {
         div(class = "card p-4 h-100 bg-dark text-light", style = "border: 1px solid #94a3b8; border-radius: 12px;",
-            span("📊 ESTRUCTURA INTERIOR COMPRIMIDA", class = "badge bg-secondary mb-3"),
-            h5("Bajo Volumen de Tiradores", style = "color: #94a3b8; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
-            p(HTML(sprintf("Solo un <strong>%0.1f%%</strong> de minutos jugados pertenece a tiradores lejanos (%0.1f DE por debajo de la media: %0.1f%%).", t$spacing_pct[1], abs(z_space), m$spacing_pct[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
+            span("📊 JUEGO INTERIOR", class = "badge bg-secondary mb-3"),
+            h5("Menor Volumen Exterior", style = "color: #94a3b8; font-weight: 700; font-size: 1.25rem; margin-bottom: 12px;"),
+            p(HTML(sprintf("Un <strong>%0.1f%%</strong> de los minutos pertenece a tiradores (%0.1f DE por debajo de la media: %0.1f%%).", t$spacing_pct[1], abs(z_space), m$spacing_pct[1])), style = "font-size: 1.05rem; line-height: 1.7; color: #cbd5e1;")
         )
       }
     }
@@ -1442,9 +1438,9 @@ server <- function(input, output, session) {
     # Render Outliers or Edge-Case Balanced Card
     if (length(outlier_cards) == 0) {
       div(class = "card p-4 text-center bg-dark text-light", style = "border: 1px solid #334155; border-radius: 12px;",
-          span("⚖️ EQUILIBRO COLECTIVO", class = "badge bg-secondary mb-3"),
+          span("⚖️ PERFIL EQUILIBRADO", class = "badge bg-secondary mb-3"),
           h5("Perfil Colectivo Equilibrado", style = "color: #f8fafc; font-weight: 700; font-size: 1.25rem; margin-bottom: 10px;"),
-          p("Perfil colectivamente equilibrado sin desviaciones estadísticas críticas respecto a la media de la categoría.", style = "font-size: 1.1rem; line-height: 1.7; color: #cbd5e1;")
+          p("Perfil colectivamente equilibrado sin desviaciones estadísticas significativas respecto a la media de la liga.", style = "font-size: 1.1rem; line-height: 1.7; color: #cbd5e1;")
       )
     } else {
       n_cards <- length(outlier_cards)
