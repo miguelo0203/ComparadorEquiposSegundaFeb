@@ -1,5 +1,5 @@
 # ==============================================================================
-# SEGUNDA FEB PRO - ELITE DARK ANALYTICS PLATFORM (ALL PLAYER STATS & PERCENTILES)
+# SEGUNDA FEB PRO - ELITE DARK ANALYTICS PLATFORM (BOOTSTRAP 5 ENHANCED STATS)
 # ==============================================================================
 
 library(shiny)
@@ -87,7 +87,7 @@ theme_custom <- bs_theme(
   base_font = font_google("Inter")
 )
 
-# Estilos CSS Personalizados con Tipografía Ampliada para Máxima Legibilidad
+# Estilos CSS Personalizados con Tipografía Ampliada y Componentes Bootstrap Elevados
 custom_css <- tags$head(
   tags$style(HTML("
     body {
@@ -178,6 +178,9 @@ custom_css <- tags$head(
     .badge { border-radius: 6px; font-size: 14px !important; padding: 6px 12px !important; }
 
     .table { color: #f8fafc !important; font-size: 1.05rem !important; }
+    .table-dark { background-color: #1e293b !important; }
+    .table-dark th { background-color: #0b0f19 !important; border-color: #334155 !important; }
+    .table-dark td { border-color: #334155 !important; }
     .dataTables_wrapper { color: #cbd5e1 !important; font-size: 1.05rem !important; }
     .dataTables_info, .dataTables_paginate { color: #cbd5e1 !important; font-size: 1rem !important; }
     table.dataTable tbody tr { background-color: #1e293b !important; color: #f8fafc !important; }
@@ -829,11 +832,11 @@ server <- function(input, output, session) {
       h3(b$nombre_completo, style = "color: #10b981; font-size: 1.6rem; font-weight: 700; margin-bottom: 4px;"),
       h5(sprintf("%s | %s | %s", b$equipo, b$puesto_posicion, alt_txt), style = "color: #94a3b8; font-size: 1.15rem; margin-bottom: 16px;"),
       div(class = "d-flex gap-2 mb-3",
-          span(arq_badge, class = "badge bg-success"),
-          span(sprintf("%s (CV = %0.2f)", d$stability, d$cv), class = sprintf("badge %s", stab_bg))
+          span(arq_badge, class = "badge bg-success shadow-sm rounded-pill px-3 py-2 fw-bold"),
+          span(sprintf("%s (CV = %0.2f)", d$stability, d$cv), class = sprintf("badge %s shadow-sm rounded-pill px-3 py-2 fw-bold", stab_bg))
       ),
       p(em(arq_desc), style = "font-size: 1.05rem; color: #cbd5e1; margin-top: 6px;"),
-      hr(),
+      hr(style = "border-color: #334155;"),
       layout_columns(
         fill = FALSE,
         div(style = "font-size: 1.05rem;", strong("Partidos: "), sprintf("%d", as.integer(s$partidos[1]))),
@@ -879,11 +882,11 @@ server <- function(input, output, session) {
     fig
   })
   
-  # TABLA COMPLETA DE TODAS LAS ESTADÍSTICAS & PERCENTILES EN LA LIGA
+  # TABLA ENRICHED BOOTSTRAP 5 DE TODAS LAS ESTADÍSTICAS & PERCENTILES EN LA LIGA
   output$ui_player_stats_table <- renderUI({
     d <- player_data()
     s <- d$stats
-    if (nrow(s) == 0) return(div("Sin datos para este jugador."))
+    if (nrow(s) == 0) return(div(class = "alert alert-warning", "Sin datos para este jugador."))
     
     fmt_val <- function(val, suffix = "") {
       if (is.na(val)) return("—")
@@ -896,49 +899,49 @@ server <- function(input, output, session) {
       bg_cls <- if (v >= 75) "bg-success" else if (v >= 50) "bg-info" else if (v >= 25) "bg-warning" else "bg-danger"
       
       tagList(
-        div(class = "d-flex align-items-center gap-2",
-            span(sprintf("%0.1f%%", v), class = sprintf("badge %s", bg_cls), style = "width: 70px; text-align: center;"),
-            div(class = "progress flex-grow-1", style = "height: 8px; background-color: #334155;",
-                div(class = sprintf("progress-bar %s", bg_cls), role = "progressbar", style = sprintf("width: %0.1f%%;", v))
+        div(class = "d-flex align-items-center gap-3",
+            span(sprintf("%0.1f%%", v), class = sprintf("badge %s shadow-sm rounded-pill px-3 py-1 fw-bold", bg_cls), style = "min-width: 75px; text-align: center; font-size: 14px;"),
+            div(class = "progress flex-grow-1 shadow-sm", style = "height: 10px; background-color: #0f172a; border-radius: 6px;",
+                div(class = sprintf("progress-bar progress-bar-striped progress-bar-animated %s", bg_cls), role = "progressbar", style = sprintf("width: %0.1f%%;", v))
             )
         )
       )
     }
     
     rows <- list(
-      list(cat = "Valoración Total (VAL)", per_g = fmt_val(s$val_pg[1], " val/G"), per_40 = fmt_val(s$val40[1], " val/40"), pctil = fmt_pctil(s$pctil_val[1])),
-      list(cat = "Puntos (PPG / Anotación)", per_g = fmt_val(s$ppg[1], " pts/G"), per_40 = fmt_val(s$ppg40[1], " pts/40"), pctil = fmt_pctil(s$pctil_ppg[1])),
-      list(cat = "True Shooting % (TS%)", per_g = fmt_val(s$ts_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_ts[1])),
-      list(cat = "Effective Field Goal % (eFG%)", per_g = fmt_val(s$efg_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_efg[1])),
-      list(cat = "Usage Rate % (USG%)", per_g = fmt_val(s$usg_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_usg[1])),
-      list(cat = "Acierto Tiro de 2 % (T2%)", per_g = fmt_val(s$t2_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_t2[1])),
-      list(cat = "Acierto Triple % (T3%)", per_g = fmt_val(s$t3_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_t3[1])),
-      list(cat = "Acierto Tiro Libre % (TL%)", per_g = fmt_val(s$tl_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_tl[1])),
-      list(cat = "Rebotes Totales (RPG)", per_g = fmt_val(s$rpg[1], " reb/G"), per_40 = fmt_val(s$rpg40[1], " reb/40"), pctil = fmt_pctil(s$pctil_rpg[1])),
-      list(cat = "Rebotes Ofensivos (OREB)", per_g = fmt_val(s$oreb_pg[1], " oreb/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_oreb[1])),
-      list(cat = "Rebotes Defensivos (DREB)", per_g = fmt_val(s$dreb_pg[1], " dreb/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_dreb[1])),
-      list(cat = "Asistencias (APG / Pase)", per_g = fmt_val(s$apg[1], " ast/G"), per_40 = fmt_val(s$apg40[1], " ast/40"), pctil = fmt_pctil(s$pctil_apg[1])),
-      list(cat = "Robos / Recuperaciones (SPG)", per_g = fmt_val(s$spg[1], " rob/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_spg[1])),
-      list(cat = "Tapones (BPG / Def. Aro)", per_g = fmt_val(s$bpg[1], " tap/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_bpg[1])),
-      list(cat = "Pérdidas de Balón (TOPG)", per_g = fmt_val(s$topg[1], " perd/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_topg[1])),
-      list(cat = "Faltas Cometidas (FPG)", per_g = fmt_val(s$fpg[1], " faltas/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_fpg[1]))
+      list(icon = icon("award"), cat = "Valoración Total (VAL)", per_g = fmt_val(s$val_pg[1], " val/G"), per_40 = fmt_val(s$val40[1], " val/40"), pctil = fmt_pctil(s$pctil_val[1])),
+      list(icon = icon("basketball"), cat = "Puntos (PPG / Anotación)", per_g = fmt_val(s$ppg[1], " pts/G"), per_40 = fmt_val(s$ppg40[1], " pts/40"), pctil = fmt_pctil(s$pctil_ppg[1])),
+      list(icon = icon("bullseye"), cat = "True Shooting % (TS%)", per_g = fmt_val(s$ts_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_ts[1])),
+      list(icon = icon("crosshair"), cat = "Effective Field Goal % (eFG%)", per_g = fmt_val(s$efg_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_efg[1])),
+      list(icon = icon("fire"), cat = "Usage Rate % (USG%)", per_g = fmt_val(s$usg_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_usg[1])),
+      list(icon = icon("circle-dot"), cat = "Acierto Tiro de 2 % (T2%)", per_g = fmt_val(s$t2_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_t2[1])),
+      list(icon = icon("bullseye"), cat = "Acierto Tiro de 3 % (T3%)", per_g = fmt_val(s$t3_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_t3[1])),
+      list(icon = icon("pen"), cat = "Acierto Tiro Libre % (TL%)", per_g = fmt_val(s$tl_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_tl[1])),
+      list(icon = icon("arrows-up-down"), cat = "Rebotes Totales (RPG)", per_g = fmt_val(s$rpg[1], " reb/G"), per_40 = fmt_val(s$rpg40[1], " reb/40"), pctil = fmt_pctil(s$pctil_rpg[1])),
+      list(icon = icon("arrow-up-long"), cat = "Rebotes Ofensivos (OREB)", per_g = fmt_val(s$oreb_pg[1], " oreb/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_oreb[1])),
+      list(icon = icon("shield-halved"), cat = "Rebotes Defensivos (DREB)", per_g = fmt_val(s$dreb_pg[1], " dreb/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_dreb[1])),
+      list(icon = icon("share-nodes"), cat = "Asistencias (APG / Pase)", per_g = fmt_val(s$apg[1], " ast/G"), per_40 = fmt_val(s$apg40[1], " ast/40"), pctil = fmt_pctil(s$pctil_apg[1])),
+      list(icon = icon("hand-sparkles"), cat = "Robos / Recuperaciones (SPG)", per_g = fmt_val(s$spg[1], " rob/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_spg[1])),
+      list(icon = icon("hand"), cat = "Tapones (BPG / Def. Aro)", per_g = fmt_val(s$bpg[1], " tap/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_bpg[1])),
+      list(icon = icon("triangle-exclamation"), cat = "Pérdidas de Balón (TOPG)", per_g = fmt_val(s$topg[1], " perd/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_topg[1])),
+      list(icon = icon("ban"), cat = "Faltas Cometidas (FPG)", per_g = fmt_val(s$fpg[1], " faltas/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_fpg[1]))
     )
     
     tagList(
-      div(class = "table-responsive",
+      div(class = "table-responsive rounded-3 shadow-sm border border-secondary", style = "border-color: #334155 !important;",
           tags$table(class = "table table-dark table-striped table-hover align-middle mb-0", style = "font-size: 1.05rem;",
                      tags$thead(
-                       tags$tr(
-                         tags$th("Métrica / Categoría Estadística", style = "width: 32%; color: #10b981; font-weight: 700;"),
-                         tags$th("Promedio Per-Game", style = "width: 20%; color: #cbd5e1;"),
-                         tags$th("Proyección Per-40 min", style = "width: 22%; color: #cbd5e1;"),
-                         tags$th("Percentil Liga (0 - 100%)", style = "width: 26%; color: #cbd5e1;")
+                       tags$tr(style = "background-color: #0b0f19;",
+                         tags$th("Métrica / Categoría Estadística", style = "width: 34%; color: #10b981; font-weight: 700; padding: 14px 18px;"),
+                         tags$th("Promedio Per-Game", style = "width: 18%; color: #cbd5e1; padding: 14px 18px;"),
+                         tags$th("Proyección Per-40 min", style = "width: 20%; color: #cbd5e1; padding: 14px 18px;"),
+                         tags$th("Percentil Liga (0 - 100%)", style = "width: 28%; color: #cbd5e1; padding: 14px 18px;")
                        )
                      ),
                      tags$tbody(
                        lapply(rows, function(r) {
                          tags$tr(
-                           tags$td(strong(r$cat)),
+                           tags$td(span(r$icon, style = "margin-right: 10px; color: #3b82f6;"), strong(r$cat)),
                            tags$td(r$per_g),
                            tags$td(r$per_40),
                            tags$td(r$pctil)
@@ -1110,7 +1113,7 @@ server <- function(input, output, session) {
           span(strong(res$nom_loc), sprintf(" (%0.1f%%)", p_loc), style = "color: #10b981; font-weight: 700;"),
           span(strong(res$nom_vis), sprintf(" (%0.1f%%)", p_vis), style = "color: #3b82f6; font-weight: 700;")
       ),
-      div(class = "progress", style = "height: 32px; font-size: 1.05rem; font-weight: 700;",
+      div(class = "progress shadow-sm", style = "height: 32px; font-size: 1.05rem; font-weight: 700; border-radius: 8px;",
           div(class = "progress-bar bg-success progress-bar-striped progress-bar-animated", 
               role = "progressbar", style = sprintf("width: %0.1f%%;", p_loc),
               sprintf("%0.1f%%", p_loc)),
