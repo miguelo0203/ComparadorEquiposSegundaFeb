@@ -1,4 +1,4 @@
-# 🏀 SEGUNDA FEB — Plataforma de Analítica & Scouting de Baloncesto
+# SEGUNDA FEB — Plataforma de Analítica & Scouting de Baloncesto
 
 > **Plataforma de Inteligencia Cuantitativa, Scouting de Jugadores y Predicción de Partidos para la Segunda FEB (España)**
 
@@ -10,54 +10,57 @@
 
 ---
 
-## 🌐 Aplicación Web en la Nube
-🌐 **Accede a la aplicación en directo**: [https://miguelo0203.shinyapps.io/ComparadorEquiposSegundaFeb/](https://miguelo0203.shinyapps.io/ComparadorEquiposSegundaFeb/)
+## Aplicación Web en la Nube
+
+[![Despliegue Web](https://img.shields.io/badge/Acceso%20Directo-shinyapps.io-10b981?style=for-the-badge&logo=rstudio&logoColor=white)](https://miguelo0203.shinyapps.io/ComparadorEquiposSegundaFeb/)
+
+URL Oficial de Acceso: [https://miguelo0203.shinyapps.io/ComparadorEquiposSegundaFeb/](https://miguelo0203.shinyapps.io/ComparadorEquiposSegundaFeb/)
 
 ---
 
-## 📌 Visión General
+## Visión General
 
-**SEGUNDA FEB** es una plataforma interactiva de analítica avanzada diseñada para **Cuerpos Técnicos**, **Directores Deportivos** y **Analistas de Baloncesto**. 
+**SEGUNDA FEB** es una plataforma interactiva de analítica avanzada diseñada para Cuerpos Técnicos, Directores Deportivos y Analistas de Baloncesto. 
 
-Transforma el scraping de actas oficiales de la Federación Española de Baloncesto (FEB) en un **dashboard en R Shiny** con motor dual de base de datos (**SQLite autónomo** para entorno Cloud / **PostgreSQL 16** para desarrollo local), modelos de **Clustering K-Means** (arquetipos de jugadores), **Regresión Logística** (simulador de partidos) y **Generación de Informes**.
+Transforma el procesamiento automatizado de actas oficiales de la Federación Española de Baloncesto (FEB) en un dashboard en R Shiny con arquitectura dual de datos (SQLite autónomo para entorno web en la nube y PostgreSQL 16 para desarrollo local), modelos de **Clustering K-Means** (identificación de arquetipos tácticos), **Regresión Logística** (simulación predictiva de encuentros con AUC 0.9867) y generación automatizada de informes.
 
-📄 **[Ver Dossier Ejecutivo de Producto (`PORTFOLIO_EJECUTIVO_SEGUNDA_FEB.md`)](PORTFOLIO_EJECUTIVO_SEGUNDA_FEB.md)**
+[Ver Dossier Ejecutivo de Producto (PORTFOLIO_EJECUTIVO_SEGUNDA_FEB.md)](PORTFOLIO_EJECUTIVO_SEGUNDA_FEB.md)
 
 ---
 
-## 🚀 Módulos del Dashboard
+## Módulos del Dashboard
 
 1. **Comparativa de Equipos**:
    - Evaluación de *Pace* (ritmo), *Net Rating* por 100 posesiones y los **Four Factors de Dean Oliver** ($eFG\%$, $TOV\%$, $OREB\%$, $FT Rate$).
-   - **Eficiencia Ofensiva vs Defensiva (ORtg / DRtg)** en matriz interactiva con opción de **Pantalla Completa**.
-   - Informe analítico adaptativo del encuentro basado en desviaciones significativas.
+   - Matriz interactiva de **Eficiencia Ofensiva vs Defensiva (ORtg / DRtg)** con opción de **Pantalla Completa**.
+   - Informe analítico del encuentro basado en desviaciones estadísticas.
 
 2. **Ficha de Jugador**:
-   - Clasificación por arquetipos (*Base Organizador*, *Anotador Principal*, *Alero 3&D*, *Tirador Catch & Shoot*, *Pívot Abierto*, *Interior Defensivo*).
+   - Clasificación por arquetipos tácticos (*Base Organizador*, *Anotador Principal*, *Alero 3&D*, *Tirador Catch & Shoot*, *Pívot Abierto*, *Interior Defensivo*).
    - **Métricas de Estabilidad**: Evaluación de consistencia competitiva mediante estadística robusta (Mediana, MAD y Coeficiente de Variación $CV$).
-   - **Radar de Percentiles (0 - 100)** y desglose Per-40 minutos.
-   - **Tabla Completa de 16 Estadísticas & Percentiles en la Liga** estilizada con Bootstrap 5 (barras animadas de progreso e iconos por categoría).
+   - **Radar de Percentiles (0 - 100)** respecto al propio arquetipo.
+   - **Tabla Completa de 16 Estadísticas & Percentiles por Arquetipo**: Desglose con totales/intentos reales ($23/66$ en $T2$, $15/42$ en $T3$, $50/61$ en $TL$), porcentaje efectivo y percentil posicional dentro del arquetipo.
 
 3. **Buscador de Jugadores**:
-   - Filtro de mercado por anotación, eficacia real ($TS\%$), valoración por 40 min, arquetipo y posición nominal (incluyendo **Posición Desconocida**).
+   - Filtro avanzado de talento por anotación, eficacia real ($TS\%$), valoración por 40 min, arquetipo y posición nominal.
 
 4. **Simulador de Partidos**:
    - Estimación de probabilidades de victoria mediante modelo Logístico ($AUC = 0.9867$, Precisión $94.12\%$).
-   - Gráfico de barras de probabilidad y desglose de factores clave diferenciales.
+   - Barra visual de probabilidad y desglose de factores clave diferenciales.
 
 5. **Resumen de Equipo**:
-   - Concentración de puntos (**Índice HHI**).
-   - Reparto de minutos (% titulares vs. banquillo) y desglose por arquetipo.
-   - **Diagnóstico Estadístico del Equipo**: Tarjetas de análisis en paralelo según desviación respecto a la media de la liga.
+   - Concentración de puntos mediante el **Índice Herfindahl-Hirschman (HHI)**.
+   - Reparto de minutos (% titulares vs. banquillo) y desglose por arquetipos.
+   - **Diagnóstico Estadístico del Equipo**: Evaluación en paralelo según desviación Z-Score respecto a la media de la liga.
 
 ---
 
-## 📁 Arquitectura del Repositorio
+## Arquitectura del Repositorio
 
 ```text
 .
 ├── PORTFOLIO_EJECUTIVO_SEGUNDA_FEB.md  # Dossier Ejecutivo de Producto
-├── README.md                           # Documentación Oficial
+├── README.md                           # Documentación Oficial de GitHub
 ├── .gitignore                          # Exclusión de datos binarios y temporales
 ├── app.R                               # Aplicación R Shiny Principal
 ├── segunda_feb_pro.sqlite              # Base de datos autónoma SQLite (1.77 MB)
@@ -72,7 +75,7 @@ Transforma el scraping de actas oficiales de la Federación Española de Balonce
 ├── database/                           # Infraestructura de Datos
 │   ├── normalize_names.R               # Normalización de Arquetipos y Catálogos
 │   ├── export_to_sqlite.R              # Exportador PostgreSQL a SQLite
-│   ├── deploy_to_cloud.R               # Script de Despliegue Automatizado a shinyapps.io
+│   ├── deploy_to_cloud.R               # Despliegue Automatizado a shinyapps.io
 │   ├── ddl_schema_segunda_feb.sql      # Schema Relacional PostgreSQL
 │   └── get_db_con.R                    # Conector DBI con Cierre Automático
 │
@@ -87,7 +90,7 @@ Transforma el scraping de actas oficiales de la Federación Española de Balonce
 
 ---
 
-## 🛠️ Requisitos e Instalación
+## Requisitos e Instalación
 
 ### Requisitos Previos
 * **R** (versión $\ge 4.6.0$)
@@ -98,9 +101,9 @@ Transforma el scraping de actas oficiales de la Federación Española de Balonce
 ```powershell
 & 'C:\Program Files\R\R-4.6.1\bin\x64\Rscript.exe' 'f:\Otro Proyecto\run_shiny_server.R'
 ```
-Abrir en el navegador: **`http://127.0.0.1:8080`**
+Abrir en el navegador: `http://127.0.0.1:8080`
 
 ---
 
-## 🔒 Licencia y Uso
+## Licencia y Uso
 Este repositorio contiene la arquitectura de código y análisis estadístico para la competición **Segunda FEB**. Los datos de las actas pertenecen a la Federación Española de Baloncesto (FEB).
