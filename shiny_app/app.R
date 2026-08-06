@@ -1,5 +1,5 @@
 # ==============================================================================
-# SEGUNDA FEB PRO - ELITE DARK ANALYTICS PLATFORM (SQLITE CLOUD DUAL ENGINE)
+# SEGUNDA FEB PRO - ELITE DARK ANALYTICS PLATFORM (ALL PLAYER STATS & PERCENTILES)
 # ==============================================================================
 
 library(shiny)
@@ -106,7 +106,7 @@ custom_css <- tags$head(
     }
     
     .scroll-panel {
-      max-height: 400px !important;
+      max-height: 450px !important;
       overflow-y: auto !important;
       padding-right: 6px !important;
       font-size: 1.05rem !important;
@@ -293,16 +293,13 @@ ui <- page_navbar(
           card_body(plotlyOutput("plot_player_radar", height = "390px"))
         )
       ),
-      layout_columns(
-        col_widths = c(6, 6),
-        card(
-          card_header(span(icon("table-cells"), " Desglose Exhaustivo Per-40 Minutos y Percentiles")),
-          card_body(uiOutput("ui_player_stats_table"))
-        ),
-        card(
-          card_header(span(icon("file-lines"), " Informe Analítico Automatizado de Scouting (NLG)")),
-          card_body(class = "scroll-panel", uiOutput("ui_player_nlg_report"))
-        )
+      card(
+        card_header(span(icon("file-lines"), " Informe Analítico Automatizado de Scouting (NLG)")),
+        card_body(class = "scroll-panel", uiOutput("ui_player_nlg_report"))
+      ),
+      card(
+        card_header(span(icon("table-cells"), " Tabla Completa de Estadísticas de Pista & Percentiles en la Liga")),
+        card_body(uiOutput("ui_player_stats_table"))
       )
     )
   ),
@@ -713,27 +710,69 @@ server <- function(input, output, session) {
       WHERE id_jugador = %s AND minutos_decimal > 0;
     ", pid)) %>% mutate(across(everything(), as.numeric))
     
-    df_stats <- dbGetQuery(con, sprintf("
+    # Calculate all stats & percentiles across all 443 active players in the league
+    df_all_league <- dbGetQuery(con, "
       SELECT 
-        COUNT(id_partido) AS partidos,
-        AVG(minutos_decimal) AS min_pg,
-        AVG(puntos) AS ppg,
-        AVG(valoracion) AS val_pg,
-        AVG(ts_pct) AS ts_pct,
-        AVG(usg_pct) AS usg_pct,
-        AVG(puntos_per40) AS ppg40,
-        AVG(rebotes_per40) AS rpg40,
-        AVG(asistencias_per40) AS apg40,
-        AVG(valoracion_per40) AS val40,
-        AVG(pctil_valoracion) AS pctil_val,
-        AVG(pctil_ts_pct) AS pctil_ts,
-        AVG(pctil_puntos) AS pctil_pts,
-        AVG(pctil_rebotes) AS pctil_reb,
-        AVG(pctil_asistencias) AS pctil_ast
-      FROM player_advanced_stats
-      WHERE id_jugador = %s;
-    ", pid)) %>% mutate(across(everything(), as.numeric))
+        j.id_jugador,
+        COUNT(bs.id_partido) AS partidos,
+        AVG(bs.minutos_decimal) AS min_pg,
+        AVG(bs.puntos) AS ppg,
+        AVG(bs.rebotes_totales) AS rpg,
+        AVG(bs.rebotes_ofensivos) AS oreb_pg,
+        AVG(bs.rebotes_defensivos) AS dreb_pg,
+        AVG(bs.asistencias) AS apg,
+        AVG(bs.recuperaciones) AS spg,
+        AVG(bs.tapones) AS bpg,
+        AVG(bs.perdidas) AS topg,
+        AVG(bs.faltas_cometidas) AS fpg,
+        AVG(bs.valoracion) AS val_pg,
+        
+        SUM(bs.t2_anotados) * 1.0 / NULLIF(SUM(bs.t2_intentados), 0) * 100 AS t2_pct,
+        SUM(bs.t3_anotados) * 1.0 / NULLIF(SUM(bs.t3_intentados), 0) * 100 AS t3_pct,
+        SUM(bs.tl_anotados) * 1.0 / NULLIF(SUM(bs.tl_intentados), 0) * 100 AS tl_pct,
+        
+        AVG(pas.puntos_per40) AS ppg40,
+        AVG(pas.rebotes_per40) AS rpg40,
+        AVG(pas.asistencias_per40) AS apg40,
+        AVG(pas.valoracion_per40) AS val40,
+        
+        AVG(pas.ts_pct) AS ts_pct,
+        AVG(pas.efg_pct) AS efg_pct,
+        AVG(pas.usg_pct) AS usg_pct
+      FROM jugadores j
+      JOIN box_scores_raw bs ON j.id_jugador = bs.id_jugador
+      JOIN player_advanced_stats pas ON bs.id_jugador = pas.id_jugador AND bs.id_partido = pas.id_partido
+      WHERE bs.minutos_decimal > 0
+      GROUP BY j.id_jugador;
+    ") %>% mutate(across(everything(), as.numeric))
     
+    df_perc <- df_all_league %>%
+      mutate(
+        pctil_ppg     = percent_rank(ppg) * 100,
+        pctil_rpg     = percent_rank(rpg) * 100,
+        pctil_oreb    = percent_rank(oreb_pg) * 100,
+        pctil_dreb    = percent_rank(dreb_pg) * 100,
+        pctil_apg     = percent_rank(apg) * 100,
+        pctil_spg     = percent_rank(spg) * 100,
+        pctil_bpg     = percent_rank(bpg) * 100,
+        pctil_topg    = (1 - percent_rank(topg)) * 100, # Menos pérdidas = Mejor percentil
+        pctil_fpg     = (1 - percent_rank(fpg)) * 100,  # Menos faltas = Mejor percentil
+        pctil_val     = percent_rank(val_pg) * 100,
+        pctil_val40   = percent_rank(val40) * 100,
+        pctil_ppg40   = percent_rank(ppg40) * 100,
+        pctil_rpg40   = percent_rank(rpg40) * 100,
+        pctil_apg40   = percent_rank(apg40) * 100,
+        pctil_t2      = percent_rank(coalesce(t2_pct, 0)) * 100,
+        pctil_t3      = percent_rank(coalesce(t3_pct, 0)) * 100,
+        pctil_tl      = percent_rank(coalesce(tl_pct, 0)) * 100,
+        pctil_ts      = percent_rank(coalesce(ts_pct, 0)) * 100,
+        pctil_efg     = percent_rank(coalesce(efg_pct, 0)) * 100,
+        pctil_usg     = percent_rank(coalesce(usg_pct, 0)) * 100
+      )
+    
+    p_stat <- df_perc %>% filter(id_jugador == as.numeric(pid))
+    
+    # Benchmark posicional
     pos_nom <- df_bio$puesto_posicion[1]
     df_pos_all <- dbGetQuery(con, sprintf("
       SELECT pas.ts_pct, pas.usg_pct, pas.valoracion_per40
@@ -764,7 +803,7 @@ server <- function(input, output, session) {
     
     list(
       bio = df_bio,
-      stats = df_stats,
+      stats = p_stat,
       games = df_games,
       bench = df_pos_bench,
       mad = val_mad,
@@ -797,10 +836,10 @@ server <- function(input, output, session) {
       hr(),
       layout_columns(
         fill = FALSE,
-        div(style = "font-size: 1.05rem;", strong("Partidos: "), sprintf("%d", as.integer(s$partidos))),
-        div(style = "font-size: 1.05rem;", strong("Min/G: "), sprintf("%0.1f", s$min_pg)),
-        div(style = "font-size: 1.05rem;", strong("PPG: "), sprintf("%0.1f", s$ppg)),
-        div(style = "font-size: 1.05rem;", strong("VAL/G: "), sprintf("%0.1f", s$val_pg)),
+        div(style = "font-size: 1.05rem;", strong("Partidos: "), sprintf("%d", as.integer(s$partidos[1]))),
+        div(style = "font-size: 1.05rem;", strong("Min/G: "), sprintf("%0.1f", s$min_pg[1])),
+        div(style = "font-size: 1.05rem;", strong("PPG: "), sprintf("%0.1f", s$ppg[1])),
+        div(style = "font-size: 1.05rem;", strong("VAL/G: "), sprintf("%0.1f", s$val_pg[1])),
         div(style = "font-size: 1.05rem;", strong("MAD Val: "), sprintf("%0.1f", d$mad)),
         div(style = "font-size: 1.05rem;", strong("CV Val: "), sprintf("%0.2f", d$cv))
       )
@@ -810,10 +849,10 @@ server <- function(input, output, session) {
   output$plot_player_radar <- renderPlotly({
     d <- player_data()
     s <- d$stats
-    if (nrow(s) == 0 || is.na(s$pctil_val)) return(NULL)
+    if (nrow(s) == 0 || is.na(s$pctil_val[1])) return(NULL)
     
     categories <- c("Valoración", "True Shooting", "Anotación", "Rebote", "Asistencias")
-    values <- c(s$pctil_val, s$pctil_ts, s$pctil_pts, s$pctil_reb, s$pctil_ast)
+    values <- c(s$pctil_val[1], s$pctil_ts[1], s$pctil_ppg[1], s$pctil_rpg[1], s$pctil_apg[1])
     
     categories <- c(categories, categories[1])
     values <- c(values, values[1])
@@ -840,27 +879,71 @@ server <- function(input, output, session) {
     fig
   })
   
+  # TABLA COMPLETA DE TODAS LAS ESTADÍSTICAS & PERCENTILES EN LA LIGA
   output$ui_player_stats_table <- renderUI({
     d <- player_data()
     s <- d$stats
-    if (nrow(s) == 0) return(NULL)
+    if (nrow(s) == 0) return(div("Sin datos para este jugador."))
+    
+    fmt_val <- function(val, suffix = "") {
+      if (is.na(val)) return("—")
+      sprintf("%0.1f%s", val, suffix)
+    }
+    
+    fmt_pctil <- function(pctil) {
+      if (is.na(pctil)) return(span("—", class = "badge bg-secondary"))
+      v <- round(pctil, 1)
+      bg_cls <- if (v >= 75) "bg-success" else if (v >= 50) "bg-info" else if (v >= 25) "bg-warning" else "bg-danger"
+      
+      tagList(
+        div(class = "d-flex align-items-center gap-2",
+            span(sprintf("%0.1f%%", v), class = sprintf("badge %s", bg_cls), style = "width: 70px; text-align: center;"),
+            div(class = "progress flex-grow-1", style = "height: 8px; background-color: #334155;",
+                div(class = sprintf("progress-bar %s", bg_cls), role = "progressbar", style = sprintf("width: %0.1f%%;", v))
+            )
+        )
+      )
+    }
+    
+    rows <- list(
+      list(cat = "Valoración Total (VAL)", per_g = fmt_val(s$val_pg[1], " val/G"), per_40 = fmt_val(s$val40[1], " val/40"), pctil = fmt_pctil(s$pctil_val[1])),
+      list(cat = "Puntos (PPG / Anotación)", per_g = fmt_val(s$ppg[1], " pts/G"), per_40 = fmt_val(s$ppg40[1], " pts/40"), pctil = fmt_pctil(s$pctil_ppg[1])),
+      list(cat = "True Shooting % (TS%)", per_g = fmt_val(s$ts_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_ts[1])),
+      list(cat = "Effective Field Goal % (eFG%)", per_g = fmt_val(s$efg_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_efg[1])),
+      list(cat = "Usage Rate % (USG%)", per_g = fmt_val(s$usg_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_usg[1])),
+      list(cat = "Acierto Tiro de 2 % (T2%)", per_g = fmt_val(s$t2_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_t2[1])),
+      list(cat = "Acierto Triple % (T3%)", per_g = fmt_val(s$t3_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_t3[1])),
+      list(cat = "Acierto Tiro Libre % (TL%)", per_g = fmt_val(s$tl_pct[1], "%"), per_40 = "—", pctil = fmt_pctil(s$pctil_tl[1])),
+      list(cat = "Rebotes Totales (RPG)", per_g = fmt_val(s$rpg[1], " reb/G"), per_40 = fmt_val(s$rpg40[1], " reb/40"), pctil = fmt_pctil(s$pctil_rpg[1])),
+      list(cat = "Rebotes Ofensivos (OREB)", per_g = fmt_val(s$oreb_pg[1], " oreb/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_oreb[1])),
+      list(cat = "Rebotes Defensivos (DREB)", per_g = fmt_val(s$dreb_pg[1], " dreb/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_dreb[1])),
+      list(cat = "Asistencias (APG / Pase)", per_g = fmt_val(s$apg[1], " ast/G"), per_40 = fmt_val(s$apg40[1], " ast/40"), pctil = fmt_pctil(s$pctil_apg[1])),
+      list(cat = "Robos / Recuperaciones (SPG)", per_g = fmt_val(s$spg[1], " rob/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_spg[1])),
+      list(cat = "Tapones (BPG / Def. Aro)", per_g = fmt_val(s$bpg[1], " tap/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_bpg[1])),
+      list(cat = "Pérdidas de Balón (TOPG)", per_g = fmt_val(s$topg[1], " perd/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_topg[1])),
+      list(cat = "Faltas Cometidas (FPG)", per_g = fmt_val(s$fpg[1], " faltas/G"), per_40 = "—", pctil = fmt_pctil(s$pctil_fpg[1]))
+    )
     
     tagList(
       div(class = "table-responsive",
-          tags$table(class = "table table-dark table-striped table-hover align-middle", style = "font-size: 1.05rem;",
+          tags$table(class = "table table-dark table-striped table-hover align-middle mb-0", style = "font-size: 1.05rem;",
                      tags$thead(
                        tags$tr(
-                         tags$th("Métrica"),
-                         tags$th("Promedio Per-40"),
-                         tags$th("Percentil Posicional (0-100)")
+                         tags$th("Métrica / Categoría Estadística", style = "width: 32%; color: #10b981; font-weight: 700;"),
+                         tags$th("Promedio Per-Game", style = "width: 20%; color: #cbd5e1;"),
+                         tags$th("Proyección Per-40 min", style = "width: 22%; color: #cbd5e1;"),
+                         tags$th("Percentil Liga (0 - 100%)", style = "width: 26%; color: #cbd5e1;")
                        )
                      ),
                      tags$tbody(
-                       tags$tr(tags$td("Valoración"), tags$td(sprintf("%0.1f val/40", s$val40)), tags$td(span(sprintf("%0.1f", s$pctil_val), class = "badge bg-success"))),
-                       tags$tr(tags$td("Puntos / Anotación"), tags$td(sprintf("%0.1f pts/40", s$ppg40)), tags$td(span(sprintf("%0.1f", s$pctil_pts), class = "badge bg-info"))),
-                       tags$tr(tags$td("True Shooting (TS%)"), tags$td(sprintf("%0.1f%%", s$ts_pct)), tags$td(span(sprintf("%0.1f", s$pctil_ts), class = "badge bg-primary"))),
-                       tags$tr(tags$td("Rebotes Totales"), tags$td(sprintf("%0.1f reb/40", s$rpg40)), tags$td(span(sprintf("%0.1f", s$pctil_reb), class = "badge bg-warning"))),
-                       tags$tr(tags$td("Asistencias"), tags$td(sprintf("%0.1f ast/40", s$apg40)), tags$td(span(sprintf("%0.1f", s$pctil_ast), class = "badge bg-secondary")))
+                       lapply(rows, function(r) {
+                         tags$tr(
+                           tags$td(strong(r$cat)),
+                           tags$td(r$per_g),
+                           tags$td(r$per_40),
+                           tags$td(r$pctil)
+                         )
+                       })
                      )
           )
       )
@@ -876,10 +959,10 @@ server <- function(input, output, session) {
     if (nrow(s) == 0) return(NULL)
     
     p1 <- sprintf("<strong>Rol y Carga de Posesiones:</strong> Clasificado bajo el arquetipo K-Means <strong>%s</strong>, consume un <strong>%0.1f%% de USG%%</strong> (%+0.1f%% respecto a la mediana de su posición: %0.1f%%).",
-                  b$nombre_arquetipo, s$usg_pct, s$usg_pct - bc$med_usg[1], bc$med_usg[1])
+                  b$nombre_arquetipo, s$usg_pct[1], s$usg_pct[1] - bc$med_usg[1], bc$med_usg[1])
     
-    p2 <- sprintf("<strong>Eficiencia de Anotación:</strong> Registra un <strong>%0.1f%% en True Shooting (TS%%)</strong> (%+0.1f%% sobre la mediana posicional), ubicándose en el <strong>percentil %0.1f</strong> de la liga en valoración por 40 minutos.",
-                  s$ts_pct, s$ts_pct - bc$med_ts[1], s$pctil_val)
+    p2 <- sprintf("<strong>Eficiencia de Anotación:</strong> Registra un <strong>%0.1f%% en True Shooting (TS%%)</strong> (%+0.1f%% sobre la mediana posicional), ubicándose en el <strong>percentil %0.1f</strong> de la liga en valoración global por partido.",
+                  s$ts_pct[1], s$ts_pct[1] - bc$med_ts[1], s$pctil_val[1])
     
     p3 <- sprintf("<strong>Veredicto de Estabilidad:</strong> Presenta un Coeficiente de Variación (CV) de <strong>%0.2f</strong> y una MAD de <strong>%0.1f val</strong>, catalogándose como un jugador <strong>%s</strong>.",
                   d$cv, d$mad, d$stability)
@@ -1188,7 +1271,7 @@ server <- function(input, output, session) {
     
     fig
   })
-  
+
   # MOTOR DINÁMICO DE DETECCIÓN DE OUTLIERS MULTIVARIABLE (BOOTSTRAP PARALLEL GRID WITH LARGER TYPOGRAPHY)
   output$ui_exec_expert_panel <- renderUI({
     d <- exec_team_data()
