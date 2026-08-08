@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Resumen Ejecutivo - Plataforma Segunda FEB</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+    
+    @page {
+      size: A4;
+      margin: 18mm 15mm 18mm 15mm;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      color: #1e293b;
+      background-color: #ffffff;
+      line-height: 1.6;
+      font-size: 13.5px;
+      margin: 0;
+      padding: 0;
+    }
+
+    .header-bar {
+      background: linear-gradient(135deg, #0b0f19 0%, #1e293b 100%);
+      color: #ffffff;
+      padding: 24px 28px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .header-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0 0 6px 0;
+      letter-spacing: -0.5px;
+    }
+
+    .header-title span {
+      color: #10b981;
+    }
+
+    .header-subtitle {
+      font-size: 13px;
+      color: #94a3b8;
+      margin: 0;
+      font-weight: 400;
+    }
+
+    .badge-pill {
+      background-color: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    h2 {
+      color: #0f172a;
+      font-size: 16px;
+      font-weight: 700;
+      border-bottom: 2px solid #10b981;
+      padding-bottom: 6px;
+      margin-top: 22px;
+      margin-bottom: 14px;
+    }
+
+    .intro-box {
+      background-color: #f8fafc;
+      border-left: 4px solid #10b981;
+      padding: 14px 18px;
+      border-radius: 0 8px 8px 0;
+      font-size: 14px;
+      color: #334155;
+      margin-bottom: 20px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .feature-card {
+      background-color: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+
+    .feature-card h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .feature-card h3 i {
+      color: #10b981;
+    }
+
+    .feature-card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: #475569;
+      font-size: 12.5px;
+    }
+
+    .feature-card li {
+      margin-bottom: 4px;
+    }
+
+    .audience-box {
+      background-color: #0f172a;
+      color: #f8fafc;
+      padding: 18px 22px;
+      border-radius: 10px;
+      margin-top: 22px;
+    }
+
+    .audience-box h2 {
+      color: #10b981;
+      border-bottom-color: #334155;
+      margin-top: 0;
+    }
+
+    .audience-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .audience-item {
+      background-color: #1e293b;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      font-size: 12px;
+    }
+
+    .audience-item strong {
+      color: #3b82f6;
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+
+    .footer-bar {
+      margin-top: 28px;
+      padding-top: 14px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .footer-bar a {
+      color: #10b981;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-bar">
+    <div>
+      <div class="header-title">SEGUNDA FEB <span>ANALYTICS</span></div>
+      <div class="header-subtitle">Plataforma de Inteligencia Cuantitativa & Scouting de Baloncesto</div>
+    </div>
+    <div class="badge-pill">Dossier Informativo</div>
+  </div>
+
+  <div class="intro-box">
+    <strong>¿Qué es esta plataforma?</strong><br>
+    Es una herramienta digital interactiva diseñada para ayudar a entrenadores, directores deportivos y analistas a entender el rendimiento de los equipos y jugadores de la competición <strong>Segunda FEB</strong>. Transforma miles de datos de actas oficiales en gráficos sencillos, informes en texto e indicadores visuales sin necesidad de interpretar hojas de cálculo complejas.
+  </div>
+
+  <h2>Funcionalidades Principales</h2>
+
+  <div class="grid-2">
+    <div class="feature-card">
+      <h3>1. Comparativa de Equipos</h3>
+      <ul>
+        <li><strong>Ritmo de Juego:</strong> Descubre si un partido será rápido (muchas posesiones) o lento y controlado.</li>
+        <li><strong>Ataque vs. Defensa:</strong> Ubica a cada equipo en una matriz interactiva según su eficiencia ofensiva y defensiva.</li>
+        <li><strong>Informe del Encuentro:</strong> Texto narrativo automático con los puntos fuertes y flacos antes del salto inicial.</li>
+      </ul>
+    </div>
+
+    <div class="feature-card">
+      <h3>2. Ficha de Jugador & Estabilidad</h3>
+      <ul>
+        <li><strong>Arquetipos Tácticos:</strong> Clasificación en roles reales (<em>Base Organizador</em>, <em>Anotador Principal</em>, <em>Tirador</em>, <em>Alero 3&D</em>, <em>Pívot Abierto</em>, <em>Interior Defensivo</em>).</li>
+        <li><strong>Comparativa Justa:</strong> Medición de percentiles frente a jugadores de su mismo perfil.</li>
+        <li><strong>Consistencia:</strong> Evaluación de regularidad para detectar jugadores estables vs. volátiles.</li>
+      </ul>
+    </div>
+
+    <div class="feature-card">
+      <h3>3. Buscador de Jugadores</h3>
+      <ul>
+        <li><strong>Búsqueda Personalizada:</strong> Filtra el mercado según las necesidades del equipo (puntos, porcentaje de tiro, valoración o rol táctico).</li>
+        <li><strong>Detección de Talento:</strong> Encuentra refuerzos idóneos de forma rápida e intuitiva.</li>
+      </ul>
+    </div>
+
+    <div class="feature-card">
+      <h3>4. Simulador de Partidos</h3>
+      <ul>
+        <li><strong>Predicción Probabilística:</strong> Modelo de estimación de victoria basado en el histórico de rendimiento.</li>
+        <li><strong>Factores Clave:</strong> Muestra los elementos diferenciales decisivos para la simulación.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="audience-box">
+    <h2>¿A quién está dirigida la herramienta?</h2>
+    <div class="audience-grid">
+      <div class="audience-item">
+        <strong>Entrenadores y Técnicos</strong>
+        Para preparar partidos y ajustar la estrategia ante cada rival.
+      </div>
+      <div class="audience-item">
+        <strong>Directores Deportivos</strong>
+        Para planificar la plantilla, evaluar perfiles y buscar fichajes.
+      </div>
+      <div class="audience-item">
+        <strong>Periodistas y Aficionados</strong>
+        Para consultar datos e informes de la liga de forma visual.
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bar">
+    <div><strong>SEGUNDA FEB ANALYTICS</strong> — Desarrollado en R Shiny con SQLite & PostgreSQL</div>
+    <div>Web App: <a href="https://miguelo0203.shinyapps.io/ComparadorEquiposSegundaFeb/">miguelo0203.shinyapps.io</a></div>
+  </div>
+
+</body>
+</html>
