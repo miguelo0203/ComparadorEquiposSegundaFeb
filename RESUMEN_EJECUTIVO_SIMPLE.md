@@ -1,3 +1,5 @@
+[🇪🇸 Español](RESUMEN_EJECUTIVO_SIMPLE.md) | [🇬🇧 English](RESUMEN_EJECUTIVO_SIMPLE_EN.md)
+
 # SEGUNDA FEB — Herramienta de Análisis y Scouting de Baloncesto
 
 ## ¿Qué es esta herramienta?

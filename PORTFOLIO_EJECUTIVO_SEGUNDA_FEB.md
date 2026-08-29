@@ -1,3 +1,5 @@
+[🇪🇸 Español](PORTFOLIO_EJECUTIVO_SEGUNDA_FEB.md) | [🇬🇧 English](PORTFOLIO_EJECUTIVO_SEGUNDA_FEB_EN.md)
+
 # 🏀 SEGUNDA FEB PRO: Plataforma Integral de Inteligencia Cuantitativa y Scouting Avanzado
 > **Dossier Ejecutivo de Producto & Arquitectura Tecnológica Aplicada al Alto Rendimiento**
 > 
@@ -87,7 +89,7 @@ La plataforma interactiva se organiza en **5 pestañas especializadas**, accesib
 
 ## 🛠️ 3. Arquitectura del Repositorio de Código
 
-Para garantizar un mantenimiento ágil y profesional, el repositorio oficial [`segunda_feb_pro`](file:///f:/Otro%20Proyecto) se encuentra organizado bajo una estructura modular limpia:
+Para garantizar un mantenimiento ágil y profesional, el repositorio oficial [`segunda_feb_pro`](.) se encuentra organizado bajo una estructura modular limpia:
 
 ```text
 f:/Otro Proyecto/
