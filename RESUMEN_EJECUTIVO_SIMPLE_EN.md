@@ -27,4 +27,4 @@ The platform delivers an end-to-end sports intelligence ecosystem transforming r
 ### 4. Direct Links & Resources
 * 🌐 **Live Web App**: [shinyapps.io](https://miguelo0203.shinyapps.io/ComparadorEquiposSegundaFeb/)
 * 👔 **Master Executive Dossier**: [PORTFOLIO_EJECUTIVO_SEGUNDA_FEB_EN.md](PORTFOLIO_EJECUTIVO_SEGUNDA_FEB_EN.md)
-* 💻 **Repository Root**: [README_EN.md](README_EN.md)
+* 💻 **Repository Root**: [README_EN.md](README.md)
